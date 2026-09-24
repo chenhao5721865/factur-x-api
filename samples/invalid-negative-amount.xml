@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   Derived golden sample. Source: ConnectingEurope/eInvoicing-EN16931 cii/examples/CII_example1.xml
-  (EUPL-1.2). Modification: <ram:BuyerTradeParty> DuePayableAmount (BT-115) changed from 250.33 to -250.33.
+  (EUPL-1.2). Modification: <ram:ApplicableHeaderTradeSettlement> DuePayableAmount (BT-115) changed from 250.33 to -250.33.
   Expected Schematron failure: BR-CO-16 (BT-115 = BT-112 - BT-113 + BT-114).
 -->
 <!--

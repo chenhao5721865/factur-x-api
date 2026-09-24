@@ -11,6 +11,7 @@
 | `valid-en16931-cii-basic.xml` | https://github.com/ConnectingEurope/eInvoicing-EN16931 → `cii/examples/CII_example1.xml`（原件未改动内容；本地副本统一为 LF 行尾） | valid | 官方 EN 16931 示例 1（多行项目发票，NL）。金额链已人工核算一致：行净额合计 229.60 = BT-109；VAT 分解 183.23@6%→10.99 + 46.37@21%→9.74 = BT-110 20.73；BT-112 = 250.33 = BT-115。EUPL-1.2 许可，许可头注释保留 |
 | `invalid-missing-buyer.xml` | 上例派生：删除 `<ram:ApplicableHeaderTradeAgreement>` 内整个 `<ram:BuyerTradeParty>` 节点 | invalid | 违反 **BR-5**（发票必须包含买方名称 BT-44）。买方节点在 CII XSD 中 minOccurs=0，故 XSD 可过、Schematron 应报错——正是校验链要抓的规则层缺陷 |
 | `invalid-negative-amount.xml` | 上例派生：`<ram:DuePayableAmount>` 由 `250.33` 改为 `-250.33` | invalid | 违反 **BR-CO-16**（BT-115 应付金额 = BT-112 − BT-113 + BT-114，即 250.33 ≠ −250.33）。金额为负且与总计链不一致 |
+| `factur-x-basic.pdf` | https://github.com/ZUGFeRD/mustangproject → `library/src/test/resources/EN16931_Einfach.pdf`（原件未改动，Apache-2.0 项目自产样例） | valid | PDF/A-3 发票，内嵌附件名 `factur-x.xml`（/F 与 /UF 均为该名），附件根元素 `rsm:CrossIndustryInvoice`，指南 `urn:cen.eu:en16931:2017`。供 `EmbeddedXmlExtractor` 提取测试（M1-T3）使用 |
 
 ## 派生样例的溯源说明
 
