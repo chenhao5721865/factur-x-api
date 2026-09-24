@@ -435,6 +435,13 @@ git commit -m "test(spike): XSD+Schematron 纯 Java 校验链决策门通过"
 
 ### Task 5: validator-core 正式化 — 结果模型与门面（TDD）
 
+> **T3 审查带入的加固项（本任务必须一并完成）**：
+> 1. `ExtractionException` 增加 `(String, Throwable)` 构造器，EmbeddedXmlExtractor 两处包装传入 cause（当前丢堆栈）
+> 2. 补分支覆盖测试：合成"可解析但无附件"PDF、仅带非 .xml 附件的 PDF、/UF 与 /F 不一致的 PDF（当前两个分支零覆盖）
+> 3. `collect()` 递归加 visited 集合防 /Kids 环（畸形 PDF StackOverflow）
+> 4. `toLowerCase()` 补 `Locale.ROOT`
+> 5. 静态工具类是否转实例化，届时结合门面需求定（现在改动成本最低）
+
 **Files:**
 - Create: `validator-core/src/main/java/com/facturxapi/validator/Severity.java`
 - Create: `validator-core/src/main/java/com/facturxapi/validator/Issue.java`
