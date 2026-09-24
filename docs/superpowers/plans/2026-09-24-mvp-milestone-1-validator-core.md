@@ -82,7 +82,7 @@ api/pom.xml                      # Milestone 2 填充，先空模块占位
   <properties>
     <java.version>17</java.version>
     <pdfbox.version>3.0.5</pdfbox.version>
-    <ph-schematron.version>7.1.5</ph-schematron.version>
+    <ph-schematron.version>7.1.3</ph-schematron.version>
   </properties>
 
   <modules>
@@ -108,7 +108,7 @@ api/pom.xml                      # Milestone 2 填充，先空模块占位
 </project>
 ```
 
-注：`ph-schematron.version` 若 Maven Central 拉取失败，到 https://central.sonatype.com/artifact/com.helger.schematron/ph-schematron-pure 查最新 7.x/8.x 替换并同步改动本文件。
+注：`ph-schematron.version` 已确认为 7.1.3（7.x 最新实存版本，7.1.5 不存在）。
 
 - [ ] **Step 2: 写 .gitignore**
 

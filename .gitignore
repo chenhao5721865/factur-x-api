@@ -4,3 +4,5 @@ target/
 *.iml
 .vscode/
 *.log
+.claude/
+找回密码.txt
