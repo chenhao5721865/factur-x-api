@@ -6,7 +6,17 @@
 
 **Architecture:** 单体多模块 Spring Boot 工程的骨架；validator-core 是无 Web 依赖的纯 Java 库：PDF 输入经 PDFBox 提取内嵌 `factur-x.xml`，XML 经 XSD（UN/CEFACT CII）+ Schematron（EN 16931 CII 规则）两段校验，输出统一 `ValidationResult`。
 
-**Tech Stack:** Java 21、Maven、Spring Boot 3.5（仅脚手架级）、PDFBox 3、ph-schematron-pure（helger）、JUnit 5。
+**Tech Stack:** Java 17、Maven、Spring Boot 3.5（仅脚手架级）、PDFBox 3、ph-schematron-pure（helger）、JUnit 5。
+
+**环境约定（所有 mvn 命令必须这样调用，系统 PATH 里的 mvn 3.6.1 跑在 JDK8 上不可用）：**
+
+```bash
+export JAVA_HOME="C:\Program Files\Java\jdk-17"
+MVN=/c/MyWork/tools/apache-maven-3.9.16/bin/mvn
+$MVN -pl validator-core test   # 示例
+```
+
+（Java 从 21 降为 17：本机 JDK 17 可用，MVP 无 21 特性依赖，后续需要时再升级。）
 
 **Spec:** `docs/superpowers/specs/2026-09-24-mvp-design.md` §2.1 §5。profile（MINIMUM/BASIC/EN16931）检测移至 Milestone 2——需研读 FNFE 规范细节，阻塞不了本里程碑。
 
@@ -70,7 +80,7 @@ api/pom.xml                      # Milestone 2 填充，先空模块占位
   <packaging>pom</packaging>
 
   <properties>
-    <java.version>21</java.version>
+    <java.version>17</java.version>
     <pdfbox.version>3.0.5</pdfbox.version>
     <ph-schematron.version>7.1.5</ph-schematron.version>
   </properties>
