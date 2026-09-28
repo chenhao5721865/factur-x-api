@@ -82,7 +82,7 @@ api/pom.xml                      # Milestone 2 填充，先空模块占位
   <properties>
     <java.version>17</java.version>
     <pdfbox.version>3.0.5</pdfbox.version>
-    <ph-schematron.version>7.1.5</ph-schematron.version>
+    <ph-schematron.version>7.1.3</ph-schematron.version>
   </properties>
 
   <modules>
@@ -108,7 +108,7 @@ api/pom.xml                      # Milestone 2 填充，先空模块占位
 </project>
 ```
 
-注：`ph-schematron.version` 若 Maven Central 拉取失败，到 https://central.sonatype.com/artifact/com.helger.schematron/ph-schematron-pure 查最新 7.x/8.x 替换并同步改动本文件。
+注：`ph-schematron.version` 已确认为 7.1.3（7.x 最新实存版本，7.1.5 不存在）。
 
 - [ ] **Step 2: 写 .gitignore**
 
@@ -360,7 +360,7 @@ git commit -m "feat(validator-core): PDFBox 提取内嵌 factur-x.xml"
 
 从 Task 2 克隆的仓库中定位并复制：
 - CII XSD（根 schema 为 `CrossIndustryInvoice` 所在的 D16B schema 集合）→ `samples/schema/cii/`
-- EN 16931 CII Schematron（`.sch` 文件，通常名 `EN16931-CII-validation.sch`）→ `samples/schema/EN16931-CII-validation.sch`
+- EN 16931 CII Schematron（`.sch` 文件，通常名 `EN16931-CII-validation.sch`）→ `samples/schema/schematron/EN16931-CII-validation.sch`
 
 优先来源：ConnectingEurope/eInvoicing-EN16931 仓库（schematron 与 xsd 目录）；备选：itplr-kosit/validator-configuration-xrechnung 的 release 包。把实际取用路径记入 `samples/README.md`。
 
@@ -394,7 +394,7 @@ class SpikeValidationTest {
 
     @Test
     void schematronFlagsInvalidSampleAndAcceptsValidOne() throws Exception {
-        var sch = SchematronResourcePure.fromFile(Path.of("samples/schema/EN16931-CII-validation.sch").toFile());
+        var sch = SchematronResourcePure.fromFile(Path.of("samples/schema/schematron/EN16931-CII-validation.sch").toFile());
 
         SchematronOutputType outValid = sch.applySchematronValidation(new StreamSource(Files.newInputStream(Path.of("samples/valid-en16931-cii-basic.xml"))));
         assertThat(failedAssertCount(outValid)).isZero();
@@ -435,6 +435,13 @@ git commit -m "test(spike): XSD+Schematron 纯 Java 校验链决策门通过"
 
 ### Task 5: validator-core 正式化 — 结果模型与门面（TDD）
 
+> **T3 审查带入的加固项（本任务必须一并完成）**：
+> 1. `ExtractionException` 增加 `(String, Throwable)` 构造器，EmbeddedXmlExtractor 两处包装传入 cause（当前丢堆栈）
+> 2. 补分支覆盖测试：合成"可解析但无附件"PDF、仅带非 .xml 附件的 PDF、/UF 与 /F 不一致的 PDF（当前两个分支零覆盖）
+> 3. `collect()` 递归加 visited 集合防 /Kids 环（畸形 PDF StackOverflow）
+> 4. `toLowerCase()` 补 `Locale.ROOT`
+> 5. 静态工具类是否转实例化，届时结合门面需求定（现在改动成本最低）
+
 **Files:**
 - Create: `validator-core/src/main/java/com/facturxapi/validator/Severity.java`
 - Create: `validator-core/src/main/java/com/facturxapi/validator/Issue.java`
@@ -461,7 +468,7 @@ class XmlRuleValidatorTest {
     private XmlRuleValidator validator() {
         return new XmlRuleValidator(
             Path.of("samples/schema/cii/CrossIndustryInvoice_100pD16B.xsd"), // 主 schema，实际路径以 Task 4 spike 确认为准
-            Path.of("samples/schema/EN16931-CII-validation.sch")
+            Path.of("samples/schema/schematron/EN16931-CII-validation.sch")
         );
     }
 
@@ -653,7 +660,7 @@ class GoldenSamplesTest {
     @MethodSource("xmlSamples")
     @EnabledIf("hasSamples")
     void golden(Path sample) {
-        XmlRuleValidator v = new XmlRuleValidator(SCHEMA, Path.of("samples/schema/EN16931-CII-validation.sch"));
+        XmlRuleValidator v = new XmlRuleValidator(SCHEMA, Path.of("samples/schema/schematron/EN16931-CII-validation.sch"));
         ValidationResult r = v.validate(readAll(sample));
         if (sample.getFileName().toString().startsWith("valid-")) {
             assertThat(r.valid()).as("%s 应通过", sample).isTrue();
@@ -724,9 +731,16 @@ git commit -m "feat(validator-core): FacturxValidator 门面与 golden 回归测
 
 ### Task 7: 里程碑收尾
 
-- [ ] **Step 1: 更新 `docs/notes/spike-decision.md`**：补充正式化后的实测结论（规则版本、已知限制：profile 检测未做、PDF/A 严格合规未做、SuccessfulReport warning 未接入）
-- [ ] **Step 2: 全量构建**：`mvn -q test`，Expected: BUILD SUCCESS
-- [ ] **Step 3: Commit**
+> **T5/T6 审查带入的遗留项（必须处理）**：
+> 1. **异常策略成文**：写进 FacturxValidator/XmlRuleValidator javadoc + spike-decision.md——文档问题（junk XML、校验不通过）→ ValidationResult；PDF 无法提取 → ExtractionException（web 层映射 422）；规则引擎故障 → IllegalStateException（web 层映射 500）
+> 2. **XSD 多错误收集**（小改动，TDD）：validateXsd 设收集型 ErrorHandler，聚齐全部 SAXParseException（当前只报第一个，验证器核心 UX）
+> 3. **记入已知限制**（不实现）：SchematronResourcePure 并发安全与 bind 开销待实测（Spring 单例并发前必测）；profile 检测、PDF/A 严格合规、SuccessfulReport warning 未做
+
+- [ ] **Step 0: 完成 TDD 小改动（XSD 多错误收集）**：测试——构造一个含两处语法错误的 XML，断言 XSD 条目 ≥2；实现——validateXsd 挂收集型 ErrorHandler
+- [ ] **Step 1: 异常策略成文**（javadoc + spike-decision.md）
+- [ ] **Step 2: 更新 `docs/notes/spike-decision.md`**：补充正式化后的实测结论（规则版本、已知限制清单含上面第 3 条全部内容、golden 样例数、测试总数）
+- [ ] **Step 3: 全量构建**：`mvn -q test`，Expected: BUILD SUCCESS
+- [ ] **Step 4: Commit**
 
 ```bash
 git add docs/notes/spike-decision.md
