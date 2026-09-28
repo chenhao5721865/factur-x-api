@@ -8,6 +8,16 @@ import java.nio.file.Path;
  *
  * <p>%PDF- 魔数前缀 → 走 PDF 内嵌 XML 提取（{@link EmbeddedXmlExtractor}）；
  * 否则按 XML 直接进 XSD+Schematron 校验链（{@link XmlRuleValidator}）。
+ *
+ * <p>异常契约（分层，调用方按此映射 HTTP 状态码）：
+ * <ul>
+ *   <li>文档可解析但内容不合规 → 正常返回 {@link ValidationResult}（valid=false，
+ *       是校验结论不是异常；web 层映射 200，由 errors 内容决定语义）；</li>
+ *   <li>PDF 无法提取（非 PDF / 无内嵌 XML）→ {@link ExtractionException}
+ *       （用户输入问题，web 层映射 422）；</li>
+ *   <li>规则引擎自身故障 → {@link IllegalStateException}
+ *       （不应由用户输入触发，web 层映射 500）。</li>
+ * </ul>
  */
 public final class FacturxValidator {
 

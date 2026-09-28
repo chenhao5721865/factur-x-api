@@ -47,4 +47,14 @@ class XmlRuleValidatorTest {
         assertThat(r.valid()).isFalse();
         assertThat(r.errors()).anyMatch(i -> i.ruleId().equals("XSD"));
     }
+
+    @Test
+    void xsdReportsAllSyntaxErrorsNotJustFirst() {
+        // 两个语法错误：未闭合标签 + 非法字符位置，XSD 层应报 ≥2 条
+        String bad = "<rsm:CrossIndustryInvoice xmlns:rsm=\"urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100\"><rsm:foo></bar></rsm:CrossIndustryInvoice>";
+        ValidationResult r = validator().validate(bad.getBytes());
+        assertThat(r.valid()).isFalse();
+        long xsdErrors = r.errors().stream().filter(i -> i.ruleId().equals("XSD")).count();
+        assertThat(xsdErrors).as("应收集多条 XSD 错误而非只报第一条").isGreaterThanOrEqualTo(2);
+    }
 }

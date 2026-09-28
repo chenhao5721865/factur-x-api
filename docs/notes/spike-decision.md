@@ -38,3 +38,32 @@
 - 校验入口固定为：`CrossIndustryInvoice_100pD16B.xsd`（XSD）+
   `EN16931-CII-validation.sch`（Schematron，全 phase，无 phase 限定即可覆盖 model/codelist/syntax）。
 - 错误模型：SVRL `FailedAssert`（id + text + flag），可直接映射为 API 的业务错误项。
+
+## 异常契约（M1-T7 成文，web 层按此映射 HTTP 状态码）
+
+| 输入情况 | 行为 | web 层映射 |
+|---|---|---|
+| 文档可解析（含 XSD/Schematron 不通过） | 正常返回 `ValidationResult`，`valid=false` 是校验结论不是异常 | 200，语义由 errors 决定 |
+| PDF 无法提取（非 PDF / 无内嵌 XML） | 抛 `ExtractionException` | 422 |
+| 规则引擎自身故障 | 抛 `IllegalStateException` | 500（不应由用户输入触发） |
+
+同一口径已写入 `FacturxValidator` 与 `XmlRuleValidator` 的类 javadoc。
+
+## 里程碑收尾实测（M1-T7，2026-09-28）
+
+- 规则资产：XSD = CEF D16B uncoupled clm（主入口 `samples/schema/cii/CrossIndustryInvoice_100pD16B.xsd`）；
+  Schematron = `EN16931-CII-validation.sch`（`samples/schema/schematron/`，CEF @ b6c9e06a）；
+  引擎 ph-schematron-pure 7.1.3 + Saxon-HE 11.6。
+- 测试：golden 样例 3 个（1 valid / 2 invalid）+ Mustang PDF 端到端 valid=true；
+  全量 16 个测试全绿（原 15 + XSD 多错误收集新增 1）。
+- XSD 多错误收集实测：输入 `<rsm:foo></bar>`（非法子元素 + 未匹配闭合标签，模板建议输入即可产生多条），
+  旧实现报 1 条即停；改用收集型 ErrorHandler（error + fatalError 均收集，按 message 去重——
+  实测同一错误会被 error 和 fatalError 各回调一次）后报 2 条。
+- 已完成加固：XXE 防护、XSD 多错误收集、/Kids 防环、cause 链、Locale.ROOT。
+- 已知限制（后续里程碑处理）：
+  1. profile（MINIMUM/BASIC/EN16931）检测未做（`ValidationResult.profile` 恒为 null）；
+  2. 严格 PDF/A-3 合规检查未做（需 veraPDF）；
+  3. SVRL `SuccessfulReport` warning 未接入（当前全按 ERROR）；
+  4. `SchematronResourcePure` 并发安全与 bind 开销未实测——Spring 单例并发前必须压测或读源码确认；
+  5. golden 尚未含 PDF 样例（当前 PDF 端到端用例依赖运行时生成的 Mustang PDF）。
+

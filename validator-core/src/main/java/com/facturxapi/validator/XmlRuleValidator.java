@@ -15,6 +15,7 @@ import javax.xml.validation.Schema;
 import javax.xml.validation.SchemaFactory;
 import javax.xml.validation.Validator;
 import org.w3c.dom.Document;
+import org.xml.sax.ErrorHandler;
 import org.xml.sax.SAXParseException;
 
 
@@ -23,6 +24,10 @@ import org.xml.sax.SAXParseException;
  *
  * <p>规则资产在构造时编译缓存（XSD 编译与 Schematron 解析都很重，
  * 不允许每次 validate 重建）；每线程通过 {@code newValidator()} 拿独立 Validator。
+ *
+ * <p>异常契约（分层）：文档内容问题（语法/规则不通过）一律以 {@link ValidationResult}
+ * 返回（valid=false，不是异常）；规则引擎自身故障才抛 {@link IllegalStateException}。
+ * 即：异常只留给"引擎坏了"，不留给"文档坏了"。
  */
 public final class XmlRuleValidator {
 
@@ -52,20 +57,47 @@ public final class XmlRuleValidator {
 
     /** @return true = XSD 通过 */
     private boolean validateXsd(byte[] xml, List<Issue> issues) {
+        // 收集型 ErrorHandler：聚齐全部 XSD 错误（而非遇第一个就抛）
+        ErrorHandler collector = new ErrorHandler() {
+            @Override
+            public void warning(SAXParseException e) {
+                // warning 不阻断，也不计入 errors（当前无 warning 接入需求）
+            }
+
+            @Override
+            public void error(SAXParseException e) {
+                addXsdIssueIfNew(issues, e);
+            }
+
+            @Override
+            public void fatalError(SAXParseException e) {
+                // 良构性错误：解析器通常会停，但仍可能多次回调（实测同一错误会经 error+fatalError 各上报一次）
+                addXsdIssueIfNew(issues, e);
+            }
+        };
         try {
             Validator v = xsdSchema.newValidator();
             // XXE 防护：禁止外部 DTD / schema 解析（用户提交的 XML 走此路径）
             v.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "");
             v.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
+            v.setErrorHandler(collector);
             v.validate(new StreamSource(new ByteArrayInputStream(xml)));
-            return true;
         } catch (SAXParseException e) {
-            issues.add(new Issue(XSD_RULE_ID, Severity.ERROR,
-                    e.getLineNumber() + ":" + e.getColumnNumber(), String.valueOf(e.getMessage())));
-            return false;
+            // 兜底：fatalError 回调后 Xerces 仍会重抛同一异常，此处去重避免重复条目
+            addXsdIssueIfNew(issues, e);
         } catch (Exception e) {
+            // 意外异常（非文档问题）兜底
             issues.add(new Issue(XSD_RULE_ID, Severity.ERROR, null, String.valueOf(e.getMessage())));
-            return false;
+        }
+        return issues.stream().noneMatch(i -> i.ruleId().equals(XSD_RULE_ID) && i.severity() == Severity.ERROR);
+    }
+
+    /** 同一条 SAXParseException 会被多次上报（error/fatalError/重抛），按 message 去重 */
+    private static void addXsdIssueIfNew(List<Issue> issues, SAXParseException e) {
+        String msg = String.valueOf(e.getMessage());
+        if (issues.stream().noneMatch(i -> i.message().equals(msg))) {
+            issues.add(new Issue(XSD_RULE_ID, Severity.ERROR,
+                    e.getLineNumber() + ":" + e.getColumnNumber(), msg));
         }
     }
 
