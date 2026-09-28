@@ -738,9 +738,9 @@ git commit -m "feat(validator-core): FacturxValidator 门面与 golden 回归测
 
 - [ ] **Step 0: 完成 TDD 小改动（XSD 多错误收集）**：测试——构造一个含两处语法错误的 XML，断言 XSD 条目 ≥2；实现——validateXsd 挂收集型 ErrorHandler
 - [ ] **Step 1: 异常策略成文**（javadoc + spike-decision.md）
-- [ ] **Step 3: 更新 `docs/notes/spike-decision.md`**：补充正式化后的实测结论（规则版本、已知限制清单含上面第 3 条全部内容、golden 样例数、测试总数）
-- [ ] **Step 2: 全量构建**：`mvn -q test`，Expected: BUILD SUCCESS
-- [ ] **Step 3: Commit**
+- [ ] **Step 2: 更新 `docs/notes/spike-decision.md`**：补充正式化后的实测结论（规则版本、已知限制清单含上面第 3 条全部内容、golden 样例数、测试总数）
+- [ ] **Step 3: 全量构建**：`mvn -q test`，Expected: BUILD SUCCESS
+- [ ] **Step 4: Commit**
 
 ```bash
 git add docs/notes/spike-decision.md
