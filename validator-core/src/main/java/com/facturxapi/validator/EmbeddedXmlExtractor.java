@@ -2,8 +2,12 @@ package com.facturxapi.validator;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDDocumentNameDictionary;
@@ -29,7 +33,8 @@ public final class EmbeddedXmlExtractor {
             if (embeddedFiles == null) {
                 throw new ExtractionException("PDF 不含内嵌附件，不是 Factur-X 发票");
             }
-            List<PDComplexFileSpecification> specs = collect(embeddedFiles);
+            List<PDComplexFileSpecification> specs = collect(embeddedFiles,
+                    Collections.newSetFromMap(new IdentityHashMap<>()));
             // Factur-X 规范规定附件名为 factur-x.xml；优先精确匹配，其次任意 .xml 附件
             byte[] exact = findXml(specs, "factur-x.xml");
             if (exact != null) {
@@ -46,21 +51,24 @@ public final class EmbeddedXmlExtractor {
             }
             throw new ExtractionException("未找到内嵌 factur-x.xml");
         } catch (IOException e) {
-            throw new ExtractionException("PDF 解析失败: " + e.getMessage());
+            throw new ExtractionException("PDF 解析失败", e);
         }
     }
 
-    /** 收集名字树（含 /Kids 子树）中的全部附件描述。 */
-    private static List<PDComplexFileSpecification> collect(PDNameTreeNode<PDComplexFileSpecification> node)
-            throws IOException {
+    /** 收集名字树（含 /Kids 子树）中的全部附件描述。visited 防御恶意 /Kids 环引用。 */
+    private static List<PDComplexFileSpecification> collect(PDNameTreeNode<PDComplexFileSpecification> node,
+            Set<PDNameTreeNode<?>> visited) throws IOException {
         List<PDComplexFileSpecification> result = new ArrayList<>();
+        if (!visited.add(node)) {
+            return result; // 已访问过：/Kids 成环，剪断
+        }
         Map<String, PDComplexFileSpecification> nodeNames = node.getNames();
         if (nodeNames != null) {
             result.addAll(nodeNames.values());
         }
         if (node.getKids() != null) {
             for (PDNameTreeNode<PDComplexFileSpecification> kid : node.getKids()) {
-                result.addAll(collect(kid));
+                result.addAll(collect(kid, visited));
             }
         }
         return result;
@@ -79,7 +87,7 @@ public final class EmbeddedXmlExtractor {
         try {
             return embeddedFile.toByteArray();
         } catch (IOException e) {
-            throw new ExtractionException("读取内嵌附件失败: " + e.getMessage());
+            throw new ExtractionException("读取内嵌附件失败", e);
         }
     }
 
@@ -89,6 +97,6 @@ public final class EmbeddedXmlExtractor {
         if (name == null || name.isEmpty()) {
             name = fs.getFilename();
         }
-        return (name == null ? "" : name).toLowerCase();
+        return (name == null ? "" : name).toLowerCase(Locale.ROOT);
     }
 }

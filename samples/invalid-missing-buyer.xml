@@ -2,7 +2,7 @@
 <!--
   Derived golden sample. Source: ConnectingEurope/eInvoicing-EN16931 cii/examples/CII_example1.xml
   (EUPL-1.2). Modification: <ram:BuyerTradeParty> removed from ApplicableHeaderTradeAgreement.
-  Expected Schematron failure: BR-5 (An Invoice shall contain the Buyer name BT-44).
+  Expected Schematron failure: BR-07 (An Invoice shall contain the Buyer name BT-44).
 -->
 <!--
 
