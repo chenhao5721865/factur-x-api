@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Valider un fichier Factur-X en ligne — gratuit | Factur-X API</title>
+  <meta name="description" content="Vérifiez gratuitement la conformité de votre facture électronique Factur-X (PDF ou XML) à la norme EN 16931. Résultat immédiat, fichier supprimé après analyse.">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+  <header class="bg-white border-b border-slate-200">
+    <div class="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
+      <span class="font-bold text-lg">Factur-X API</span>
+      <span class="text-sm text-slate-500">Vérification de factures électroniques</span>
+    </div>
+  </header>
+
+  <main class="max-w-3xl mx-auto px-4 py-10 flex-1 w-full">
+    <h1 class="text-3xl font-bold mb-2">Valider un fichier Factur-X en ligne — gratuit</h1>
+    <p class="text-slate-600 mb-8">
+      Téléversez votre facture électronique (PDF Factur-X ou XML CII / EN 16931) et vérifiez
+      instantanément sa conformité à la norme européenne.
+    </p>
+
+    <!-- Zone de téléversement -->
+    <form id="upload-form" hx-post="/validateur-factur-x" hx-target="#resultat" hx-swap="innerHTML"
+          hx-encoding="multipart/form-data"
+          class="bg-white border-2 border-dashed border-slate-300 rounded-xl p-8 text-center">
+      <p class="text-slate-500 mb-4">Glissez-déposez votre fichier ici, ou cliquez pour choisir.</p>
+      <input type="file" name="file" id="file-input" accept=".pdf,.xml,application/pdf,text/xml,application/xml"
+             class="mx-auto block text-sm file:mr-4 file:px-4 file:py-2 file:rounded-lg file:border-0
+                    file:bg-blue-600 file:text-white file:cursor-pointer hover:file:bg-blue-700"
+             required
+             hx-on::change="this.form.requestSubmit()" />
+      <p class="text-xs text-slate-400 mt-4">Formats acceptés : PDF, XML — taille maximale 10 Mo.</p>
+      <button type="submit"
+              class="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
+        Vérifier la conformité
+      </button>
+    </form>
+
+    <!-- Résultat (fragment htmx) -->
+    <div id="resultat" class="mt-8" aria-live="polite">
+      <div th:if="${erreur != null}" class="bg-red-50 border border-red-300 text-red-800 rounded-lg p-4"
+           th:text="${erreur}"></div>
+      <th:block th:if="${result != null}">
+        <div th:replace="~{fragments/resultat :: resultat}"></div>
+      </th:block>
+    </div>
+
+    <!-- Vie privée -->
+    <section class="mt-12 bg-emerald-50 border border-emerald-200 rounded-xl p-6">
+      <h2 class="font-semibold text-emerald-900 mb-2">Vos données restent privées</h2>
+      <ul class="list-disc list-inside text-sm text-emerald-800 space-y-1">
+        <li>Votre fichier est traité <strong>en mémoire</strong> et <strong>supprimé immédiatement</strong> après l'analyse.</li>
+        <li>Aucune copie n'est conservée sur nos serveurs — <strong>conforme au RGPD</strong>.</li>
+        <li>Nous n'enregistrons que des métadonnées techniques (taille, type, résultat).</li>
+      </ul>
+    </section>
+
+    <!-- Inscription (placeholder) -->
+    <section class="mt-8 bg-white border border-slate-200 rounded-xl p-6">
+      <h2 class="font-semibold mb-1">Restez informé</h2>
+      <p class="text-sm text-slate-500 mb-4">API de génération et de validation en cours de préparation.</p>
+      <form class="flex gap-2 max-w-md">
+        <input type="email" placeholder="votre@exemple.fr"
+               class="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm">
+        <button type="button" disabled
+                class="px-4 py-2 bg-slate-300 text-slate-600 rounded-lg text-sm cursor-not-allowed">
+          Bientôt disponible
+        </button>
+      </form>
+    </section>
+  </main>
+
+  <footer class="bg-white border-t border-slate-200">
+    <div class="max-w-3xl mx-auto px-4 py-6 text-sm text-slate-500">
+      Factur-X API — validation EN 16931 / Factur-X. La norme de facturation électronique devient
+      obligatoire en France en 2026. Préparez vos flux dès maintenant.
+    </div>
+  </footer>
+
+  <script>
+    // Drag & drop : dépose le fichier dans l'input puis soumet le formulaire.
+    const form = document.getElementById('upload-form');
+    form.addEventListener('dragover', e => {
+      e.preventDefault();
+      form.classList.add('border-blue-500', 'bg-blue-50');
+    });
+    form.addEventListener('dragleave', () => form.classList.remove('border-blue-500', 'bg-blue-50'));
+    form.addEventListener('drop', e => {
+      e.preventDefault();
+      form.classList.remove('border-blue-500', 'bg-blue-50');
+      const input = document.getElementById('file-input');
+      if (e.dataTransfer.files.length > 0) {
+        input.files = e.dataTransfer.files;
+        form.requestSubmit();
+      }
+    });
+  </script>
+</body>
+</html>
