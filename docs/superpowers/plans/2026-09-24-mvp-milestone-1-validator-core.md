@@ -360,7 +360,7 @@ git commit -m "feat(validator-core): PDFBox 提取内嵌 factur-x.xml"
 
 从 Task 2 克隆的仓库中定位并复制：
 - CII XSD（根 schema 为 `CrossIndustryInvoice` 所在的 D16B schema 集合）→ `samples/schema/cii/`
-- EN 16931 CII Schematron（`.sch` 文件，通常名 `EN16931-CII-validation.sch`）→ `samples/schema/EN16931-CII-validation.sch`
+- EN 16931 CII Schematron（`.sch` 文件，通常名 `EN16931-CII-validation.sch`）→ `samples/schema/schematron/EN16931-CII-validation.sch`
 
 优先来源：ConnectingEurope/eInvoicing-EN16931 仓库（schematron 与 xsd 目录）；备选：itplr-kosit/validator-configuration-xrechnung 的 release 包。把实际取用路径记入 `samples/README.md`。
 
@@ -394,7 +394,7 @@ class SpikeValidationTest {
 
     @Test
     void schematronFlagsInvalidSampleAndAcceptsValidOne() throws Exception {
-        var sch = SchematronResourcePure.fromFile(Path.of("samples/schema/EN16931-CII-validation.sch").toFile());
+        var sch = SchematronResourcePure.fromFile(Path.of("samples/schema/schematron/EN16931-CII-validation.sch").toFile());
 
         SchematronOutputType outValid = sch.applySchematronValidation(new StreamSource(Files.newInputStream(Path.of("samples/valid-en16931-cii-basic.xml"))));
         assertThat(failedAssertCount(outValid)).isZero();
@@ -468,7 +468,7 @@ class XmlRuleValidatorTest {
     private XmlRuleValidator validator() {
         return new XmlRuleValidator(
             Path.of("samples/schema/cii/CrossIndustryInvoice_100pD16B.xsd"), // 主 schema，实际路径以 Task 4 spike 确认为准
-            Path.of("samples/schema/EN16931-CII-validation.sch")
+            Path.of("samples/schema/schematron/EN16931-CII-validation.sch")
         );
     }
 
@@ -660,7 +660,7 @@ class GoldenSamplesTest {
     @MethodSource("xmlSamples")
     @EnabledIf("hasSamples")
     void golden(Path sample) {
-        XmlRuleValidator v = new XmlRuleValidator(SCHEMA, Path.of("samples/schema/EN16931-CII-validation.sch"));
+        XmlRuleValidator v = new XmlRuleValidator(SCHEMA, Path.of("samples/schema/schematron/EN16931-CII-validation.sch"));
         ValidationResult r = v.validate(readAll(sample));
         if (sample.getFileName().toString().startsWith("valid-")) {
             assertThat(r.valid()).as("%s 应通过", sample).isTrue();
