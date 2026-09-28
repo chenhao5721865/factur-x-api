@@ -731,7 +731,14 @@ git commit -m "feat(validator-core): FacturxValidator 门面与 golden 回归测
 
 ### Task 7: 里程碑收尾
 
-- [ ] **Step 1: 更新 `docs/notes/spike-decision.md`**：补充正式化后的实测结论（规则版本、已知限制：profile 检测未做、PDF/A 严格合规未做、SuccessfulReport warning 未接入）
+> **T5/T6 审查带入的遗留项（必须处理）**：
+> 1. **异常策略成文**：写进 FacturxValidator/XmlRuleValidator javadoc + spike-decision.md——文档问题（junk XML、校验不通过）→ ValidationResult；PDF 无法提取 → ExtractionException（web 层映射 422）；规则引擎故障 → IllegalStateException（web 层映射 500）
+> 2. **XSD 多错误收集**（小改动，TDD）：validateXsd 设收集型 ErrorHandler，聚齐全部 SAXParseException（当前只报第一个，验证器核心 UX）
+> 3. **记入已知限制**（不实现）：SchematronResourcePure 并发安全与 bind 开销待实测（Spring 单例并发前必测）；profile 检测、PDF/A 严格合规、SuccessfulReport warning 未做
+
+- [ ] **Step 0: 完成 TDD 小改动（XSD 多错误收集）**：测试——构造一个含两处语法错误的 XML，断言 XSD 条目 ≥2；实现——validateXsd 挂收集型 ErrorHandler
+- [ ] **Step 1: 异常策略成文**（javadoc + spike-decision.md）
+- [ ] **Step 2: 更新 `docs/notes/spike-decision.md`**：补充正式化后的实测结论（规则版本、已知限制清单含上面第 3 条全部内容、golden 样例数、测试总数）
 - [ ] **Step 2: 全量构建**：`mvn -q test`，Expected: BUILD SUCCESS
 - [ ] **Step 3: Commit**
 
