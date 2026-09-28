@@ -65,5 +65,10 @@
   2. 严格 PDF/A-3 合规检查未做（需 veraPDF）；
   3. SVRL `SuccessfulReport` warning 未接入（当前全按 ERROR）；
   4. `SchematronResourcePure` 并发安全与 bind 开销未实测——Spring 单例并发前必须压测或读源码确认；
-  5. golden 尚未含 PDF 样例（当前 PDF 端到端用例依赖运行时生成的 Mustang PDF）。
+  5. golden 尚未含 PDF 样例（当前 PDF 端到端用例依赖运行时生成的 Mustang PDF）；
+  6. golden 样例距 spec §5「有效+无效各 10+」目标尚有缺口（当前 3 个 XML）——M2 验收标准之一；
+  7. `validateXsd` 的 `catch (Exception)` 兜底把引擎故障包装为 XSD ERROR Issue（按异常契约应抛
+     IllegalStateException 走 500）——M2 排期改为抛 ISE 或收窄 catch（XmlRuleValidator.java:88-90）；
+  8. 提取器以文件名匹配（factur-x.xml 精确优先 + .xml 后缀兜底）替代 AFRelationship=Data 检查——
+     工程上更稳，但与 spec §2.1 措辞有出入，属有意决策。
 
