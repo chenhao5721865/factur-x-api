@@ -64,7 +64,8 @@
   1. profile（MINIMUM/BASIC/EN16931）检测未做（`ValidationResult.profile` 恒为 null）；
   2. 严格 PDF/A-3 合规检查未做（需 veraPDF）；
   3. SVRL `SuccessfulReport` warning 未接入（当前全按 ERROR）；
-  4. `SchematronResourcePure` 并发安全与 bind 开销未实测——Spring 单例并发前必须压测或读源码确认；
+  4. ~~`SchematronResourcePure` 并发安全与 bind 开销未实测~~——已闭环（M2 骨架并发测试 8×25 全绿，
+     无需 synchronized，见 docs/notes/m2-skeleton-decisions.md）；
   5. golden 尚未含 PDF 样例（当前 PDF 端到端用例依赖运行时生成的 Mustang PDF）；
   6. golden 样例距 spec §5「有效+无效各 10+」目标尚有缺口（当前 3 个 XML）——M2 验收标准之一；
   7. `validateXsd` 的 `catch (Exception)` 兜底把引擎故障包装为 XSD ERROR Issue（按异常契约应抛
