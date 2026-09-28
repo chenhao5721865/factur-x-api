@@ -48,6 +48,34 @@ class EmbeddedXmlExtractorTest {
         }
     }
 
+    /** PDFBox 现场生成 /F 与 /UF 不一致的 PDF：/F=attach.txt，/UF=factur-x.xml。 */
+    private byte[] pdfWithDivergentFAndUf() throws Exception {
+        try (PDDocument doc = new PDDocument();
+             ByteArrayOutputStream out = new ByteArrayOutputStream()) {
+            PDComplexFileSpecification fs = new PDComplexFileSpecification();
+            fs.setFile("attach.txt");          // /F 指向 .txt 名
+            fs.setFileUnicode("factur-x.xml"); // /UF 指向 factur-x.xml
+            String cii = "<rsm:CrossIndustryInvoice xmlns:rsm=\"urn:un:unece:uncefact:data:standard:CrossIndustryInvoice:100\"/>";
+            PDEmbeddedFile ef = new PDEmbeddedFile(doc, new ByteArrayInputStream(cii.getBytes()));
+            fs.setEmbeddedFile(ef);
+            PDEmbeddedFilesNameTreeNode efTree = new PDEmbeddedFilesNameTreeNode();
+            efTree.setNames(Map.of("attach.txt", fs));
+            PDDocumentNameDictionary names = new PDDocumentNameDictionary(doc.getDocumentCatalog());
+            names.setEmbeddedFiles(efTree);
+            doc.getDocumentCatalog().setNames(names);
+            doc.save(out);
+            return out.toByteArray();
+        }
+    }
+
+    @Test
+    void ufTakesPrecedenceOverFDivergentName() throws Exception {
+        // /F=attach.txt、/UF=factur-x.xml：附件名判定必须取 /UF，提取成功且内容是 CII XML；
+        // 若错误地用 /F 判名，会因非 .xml 走"未找到"分支而失败
+        byte[] xml = EmbeddedXmlExtractor.extractFacturXml(pdfWithDivergentFAndUf());
+        assertThat(new String(xml)).contains("CrossIndustryInvoice");
+    }
+
     @Test
     void extractsEmbeddedFacturXmlFromPdf() throws Exception {
         byte[] xml = EmbeddedXmlExtractor.extractFacturXml(samplePdf());

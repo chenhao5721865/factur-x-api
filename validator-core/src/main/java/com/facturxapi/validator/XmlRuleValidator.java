@@ -54,6 +54,9 @@ public final class XmlRuleValidator {
     private boolean validateXsd(byte[] xml, List<Issue> issues) {
         try {
             Validator v = xsdSchema.newValidator();
+            // XXE 防护：禁止外部 DTD / schema 解析（用户提交的 XML 走此路径）
+            v.setProperty(XMLConstants.ACCESS_EXTERNAL_DTD, "");
+            v.setProperty(XMLConstants.ACCESS_EXTERNAL_SCHEMA, "");
             v.validate(new StreamSource(new ByteArrayInputStream(xml)));
             return true;
         } catch (SAXParseException e) {
@@ -71,6 +74,9 @@ public final class XmlRuleValidator {
             // applySchematronValidationToSVRL 入参须是 DOM 节点（spike 实测，7.1.3）
             DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
             dbf.setNamespaceAware(true);
+            // XXE 防护：安全处理 + 禁 DOCTYPE（外部实体随之失效），用户提交的 XML 走此路径
+            dbf.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+            dbf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
             Document doc = dbf.newDocumentBuilder().parse(new ByteArrayInputStream(xml));
             SchematronOutputType svrl = schematron.applySchematronValidationToSVRL(doc, null);
             for (SVRLFailedAssert fa : SVRLHelper.getAllFailedAssertions(svrl)) {
