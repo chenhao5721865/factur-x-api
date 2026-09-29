@@ -1,0 +1,61 @@
+# 生产编排：Caddy(自动 TLS) -> app -> db。部署方式见 docs/notes/deployment-plan.md
+#
+# 服务器上文件：web-*.jar + docker-compose.prod.yml + Caddyfile + .env
+#   mvn package 后 scp JAR，然后：docker compose -f docker-compose.prod.yml up -d --build
+#   （沿用既有约定：compose 不重建 JAR，更新 = 重传 JAR 再 up -d --build）
+#
+# 与开发 compose 的差异：
+#   - 加 Caddy（唯一对外入口，80/443）；app 与 db 均不映射宿主机端口
+#   - db 密码经 .env 注入（POSTGRES_PASSWORD=...，勿提交）
+services:
+  app:
+    build: .
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xms128m -Xmx512m" # 2G 内存 VPS 预算：JVM 512m + PG + Caddy
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    logging: &logging
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: facturx
+      POSTGRES_USER: facturx
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?在 .env 中设置 POSTGRES_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U facturx -d facturx"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+    logging: *logging
+
+  caddy:
+    image: caddy:2-alpine
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp" # HTTP/3
+    environment:
+      ACME_EMAIL: ${ACME_EMAIL:?在 .env 中设置 ACME_EMAIL}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data # 证书存储，重启不重申请
+      - caddy_config:/config
+    depends_on:
+      - app
+    restart: unless-stopped
+    logging: *logging
+
+volumes:
+  pgdata:
+  caddy_data:
+  caddy_config:

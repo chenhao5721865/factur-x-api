@@ -1,0 +1,10 @@
+# 自动 HTTPS：Caddy 启动即向 Let's Encrypt 申请证书（需 DNS 已生效 + 80/443 可达）
+# 更换域名时改这里 + compose 里 ACME_EMAIL
+{
+	email {$ACME_EMAIL}
+}
+
+factur-x-api.com, www.factur-x-api.com {
+	encode zstd gzip
+	reverse_proxy app:8080
+}

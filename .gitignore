@@ -5,4 +5,5 @@ target/
 .vscode/
 *.log
 .claude/
+.env
 找回密码.txt
