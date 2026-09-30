@@ -49,12 +49,12 @@ class SubscribeControllerTest {
     }
 
     @Test
-    void subscribe_invalid_email_returns_400() throws Exception {
+    void subscribe_invalid_email_returns_422() throws Exception {
         mockMvc.perform(post("/subscribe")
                         .header("HX-Request", "true")
                         .contentType(MediaType.APPLICATION_FORM_URLENCODED)
                         .param("email", "not-an-email"))
-                .andExpect(status().isBadRequest())
+                .andExpect(status().isUnprocessableEntity())
                 .andExpect(content().string(containsString("invalide")));
     }
 

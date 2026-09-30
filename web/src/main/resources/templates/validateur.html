@@ -65,8 +65,8 @@
       <p class="text-sm text-slate-500 mb-4">API de génération et de validation en cours de préparation.</p>
       <form id="subscribe-form"
             hx-post="/subscribe"
-            hx-target="#subscribe-section"
-            hx-swap="outerHTML"
+            hx-target="#subscribe-message"
+            hx-swap="innerHTML"
             class="flex gap-2 max-w-md">
         <input type="hidden" th:name="${_csrf?.parameterName}" th:value="${_csrf?.token}"/>
         <input type="email" name="email" placeholder="votre@exemple.fr" required
@@ -76,6 +76,7 @@
           S'inscrire
         </button>
       </form>
+      <div id="subscribe-message" class="mt-3 max-w-md"></div>
     </section>
   </main>
 

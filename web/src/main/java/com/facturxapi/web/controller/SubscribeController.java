@@ -31,8 +31,9 @@ public class SubscribeController {
         }
 
         // Email format validation (regex, no extra dependency needed)
+        // 422 (not 400): htmx swaps 422 responses into the DOM by default; 4xx others are ignored.
         if (email == null || !EMAIL_PATTERN.matcher(email).matches()) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
                     .body("<div class=\"bg-red-50 border border-red-300 text-red-800 rounded-lg p-4 text-sm\">"
                         + "Format d'email invalide.</div>");
         }
