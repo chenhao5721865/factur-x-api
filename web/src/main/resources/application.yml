@@ -8,3 +8,13 @@ spring:
     multipart:
       max-file-size: 10MB
       max-request-size: 11MB
+  datasource:
+    url: jdbc:postgresql://db:5432/facturx
+    username: facturx
+    password: facturx
+  jpa:
+    hibernate:
+      ddl-auto: validate
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
