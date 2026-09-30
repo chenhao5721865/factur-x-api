@@ -67,6 +67,7 @@
             hx-post="/subscribe"
             hx-target="#subscribe-message"
             hx-swap="innerHTML"
+            novalidate
             class="flex gap-2 max-w-md">
         <input type="hidden" th:name="${_csrf?.parameterName}" th:value="${_csrf?.token}"/>
         <input type="email" name="email" placeholder="votre@exemple.fr" required
