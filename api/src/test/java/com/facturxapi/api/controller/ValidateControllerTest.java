@@ -124,7 +124,8 @@ class ValidateControllerTest {
     void missingApiKey_returns401() throws Exception {
         byte[] data = Files.readAllBytes(SAMPLES.resolve("valid-en16931-cii-basic.xml"));
         mockMvc.perform(prepareNoKey("valid.xml", data))
-            .andExpect(status().is4xxClientError());
+            .andExpect(status().isUnauthorized())
+            .andExpect(jsonPath("$.error").value("Missing API key. Provide X-API-Key header."));
     }
 
     @Test

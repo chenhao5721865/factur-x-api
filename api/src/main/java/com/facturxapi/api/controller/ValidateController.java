@@ -30,9 +30,15 @@ public class ValidateController {
     @PostMapping("/validate")
     public ResponseEntity<?> validate(
             @RequestPart("file") MultipartFile file,
-            @RequestHeader("X-API-Key") String apiKey) {
+            @RequestHeader(value = "X-API-Key", required = false) String apiKey) {
 
-        // 1. Resolve email from API key
+        // 1. Check header present
+        if (apiKey == null || apiKey.isBlank()) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of("error", "Missing API key. Provide X-API-Key header."));
+        }
+
+        // 2. Resolve email from API key
         String email = apiKeyService.resolveEmail(apiKey).orElse(null);
         if (email == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
