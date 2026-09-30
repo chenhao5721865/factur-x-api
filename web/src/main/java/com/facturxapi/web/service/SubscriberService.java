@@ -19,13 +19,13 @@ public class SubscriberService {
 
     @Transactional
     public SubscribeResult subscribe(String email) {
-        try {
-            Subscriber subscriber = new Subscriber(email.trim().toLowerCase());
-            repository.save(subscriber);
-            return SubscribeResult.success();
-        } catch (DataIntegrityViolationException e) {
+        String normalized = email.trim().toLowerCase();
+        if (repository.existsByEmail(normalized)) {
             return SubscribeResult.duplicate();
         }
+        Subscriber subscriber = new Subscriber(normalized);
+        repository.save(subscriber);
+        return SubscribeResult.success();
     }
 
     public Optional<Subscriber> findByEmail(String email) {
