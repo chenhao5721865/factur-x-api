@@ -26,8 +26,9 @@ public class ApiKeyService {
         if (existing.isPresent()) {
             return Optional.empty();
         }
-        // If a revoked key exists, delete it and generate a new one
-        repository.findByEmailAndRevokedAtIsNull(email)
+        // If a revoked key exists, delete it before generating a new one
+        repository.findByEmail(email)
+            .filter(ApiKey::isRevoked)
             .ifPresent(repository::delete);
 
         String token = PREFIX

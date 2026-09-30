@@ -65,9 +65,11 @@ class ApiKeyServiceTest {
         ApiKey revoked = new ApiKey();
         revoked.setEmail("test@example.com");
         revoked.setRevokedAt(OffsetDateTime.now().minusDays(1));
-        // First call finds active (empty), second call finds revoked (delete)
+        // First query: no active key
         when(repository.findByEmailAndRevokedAtIsNull("test@example.com"))
-            .thenReturn(Optional.empty())
+            .thenReturn(Optional.empty());
+        // Second query: found revoked key
+        when(repository.findByEmail("test@example.com"))
             .thenReturn(Optional.of(revoked));
 
         Optional<String> result = service.generateFor("test@example.com");
