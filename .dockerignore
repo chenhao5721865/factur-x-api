@@ -1,2 +1,3 @@
 *
 !web/target/web-*.jar
+!api/target/api-*.jar
