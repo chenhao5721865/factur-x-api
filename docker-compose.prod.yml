@@ -12,6 +12,11 @@ services:
     build: .
     environment:
       JAVA_TOOL_OPTIONS: "-Xms128m -Xmx512m" # 2G 内存 VPS 预算：JVM 512m + PG + Caddy
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: facturx
+      DB_USER: facturx
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
     depends_on:
       db:
         condition: service_healthy
