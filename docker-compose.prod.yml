@@ -1,6 +1,7 @@
-# 生产编排：Caddy(自动 TLS) -> app -> db。部署方式见 docs/notes/deployment-plan.md
+# 生产编排：Caddy(自动 TLS) -> app + api -> db。部署方式见 docs/notes/deployment-plan.md
 #
-# 服务器上文件：web-*.jar + docker-compose.prod.yml + Caddyfile + .env
+# 服务器上文件：web-*.jar + api/target/api-*.jar + api/Dockerfile
+#              + docker-compose.prod.yml + Caddyfile + .env
 #   mvn package 后 scp JAR，然后：docker compose -f docker-compose.prod.yml up -d --build
 #   （沿用既有约定：compose 不重建 JAR，更新 = 重传 JAR 再 up -d --build）
 #
@@ -26,6 +27,23 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    environment:
+      JAVA_TOOL_OPTIONS: "-Xms64m -Xmx384m" # PDFBox 校验吃内存，384m 够用且不挤占 web
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: facturx
+      DB_USER: facturx
+      DB_PASSWORD: ${POSTGRES_PASSWORD}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    logging: *logging
 
   db:
     image: postgres:16-alpine
@@ -57,6 +75,7 @@ services:
       - caddy_config:/config
     depends_on:
       - app
+      - api
     restart: unless-stopped
     logging: *logging
 

@@ -6,5 +6,12 @@
 
 factur-x-api.com, www.factur-x-api.com {
 	encode zstd gzip
-	reverse_proxy app:8080
+	# 白名单：仅放行校验与健康检查，/api/admin/* 不对外（发 key 须 SSH 走内网）
+	@api path /api/validate /api/health
+	handle @api {
+		reverse_proxy api:8081
+	}
+	handle {
+		reverse_proxy app:8080
+	}
 }
