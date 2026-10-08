@@ -18,3 +18,9 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+    # 独立历史表：与 web 模块共用同一数据库，避免 flyway_schema_history 校验冲突
+    table: flyway_api_history
+    # 生产库 schema 已有 web 的表，Flyway 要求在非空 schema 建新历史表时显式 baseline
+    baseline-on-migrate: true
+    # baseline 默认 version=1 会把 V1 迁移标记为已应用导致不执行，必须降到 0
+    baseline-version: 0
