@@ -45,6 +45,12 @@ public class ApiKeyService {
             .map(ApiKey::getEmail);
     }
 
+    /** 返回实体本身，供需要 plan/配额字段的调用方（/generate）。resolveEmail 保留给 /validate 零改动 */
+    public Optional<ApiKey> resolveActive(String token) {
+        return repository.findByToken(token)
+            .filter(k -> !k.isRevoked());
+    }
+
     @Transactional
     public boolean revokeByToken(String token) {
         return repository.findByToken(token)

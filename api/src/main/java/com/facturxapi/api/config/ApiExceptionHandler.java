@@ -1,6 +1,8 @@
 package com.facturxapi.api.config;
 
+import com.facturxapi.api.controller.ApiKeysController;
 import com.facturxapi.api.controller.GenerateController;
+import com.facturxapi.api.controller.LsWebhookController;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.springframework.http.ResponseEntity;
@@ -13,7 +15,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
  * GenerateController 专属异常处理（assignableTypes 限定，不影响 ValidateController）。
  * 统一输出 {"error": ...} Map。
  */
-@RestControllerAdvice(assignableTypes = GenerateController.class)
+@RestControllerAdvice(assignableTypes = {
+    GenerateController.class, ApiKeysController.class, LsWebhookController.class})
 public class ApiExceptionHandler {
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

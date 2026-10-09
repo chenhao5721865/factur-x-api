@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tarifs — API Factur-X : générez des factures EN 16931 | Factur-X API</title>
+  <meta name="description" content="Générez des factures électroniques conformes EN 16931 (Factur-X) via API. Gratuit : 5 factures/mois. Pro : 500 factures/mois pour 9 $/mois.">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+  <header class="bg-white border-b border-slate-200">
+    <div class="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
+      <span class="font-bold text-lg">Factur-X API</span>
+      <nav class="text-sm space-x-4">
+        <a href="/validateur-factur-x" class="text-slate-500 hover:text-slate-800">Validateur gratuit</a>
+        <a href="/tarifs" class="font-medium text-blue-600">Tarifs</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-3xl mx-auto px-4 py-10 flex-1 w-full">
+    <h1 class="text-3xl font-bold mb-2">Tarifs</h1>
+    <p class="text-slate-600 mb-8">
+      Générez des factures électroniques conformes EN 16931 (XML CII / Factur-X) via
+      <code class="text-sm bg-slate-200 rounded px-1">POST /api/generate</code>.
+      La validation reste gratuite et illimitée pour tous.
+    </p>
+
+    <!-- Merci (retour de checkout) -->
+    <div th:if="${merci}" class="mb-8 bg-emerald-50 border border-emerald-300 text-emerald-900 rounded-xl p-6">
+      <h2 class="font-semibold text-lg mb-1">Merci pour votre abonnement !</h2>
+      <p class="text-sm">
+        Votre paiement est en cours de traitement. Votre clé passe en plan <strong>Pro</strong>
+        automatiquement en quelques secondes (webhook de confirmation). Aucune action nécessaire.
+      </p>
+    </div>
+
+    <!-- Cartes de prix -->
+    <section class="grid md:grid-cols-2 gap-6 mb-12">
+      <div class="bg-white border border-slate-200 rounded-xl p-6">
+        <h2 class="font-semibold text-lg">Gratuit</h2>
+        <p class="text-3xl font-bold mt-2">0 €</p>
+        <ul class="mt-4 text-sm text-slate-600 space-y-2 list-disc list-inside">
+          <li>5 factures générées / mois</li>
+          <li>Validation illimitée (API + outil web)</li>
+          <li>XML EN 16931 (CII), auto-contrôlé</li>
+          <li>Sans carte bancaire</li>
+        </ul>
+      </div>
+      <div class="bg-blue-600 text-white rounded-xl p-6 border border-blue-700">
+        <h2 class="font-semibold text-lg">Pro</h2>
+        <p class="text-3xl font-bold mt-2">9 $ <span class="text-base font-normal opacity-80">/ mois</span></p>
+        <ul class="mt-4 text-sm space-y-2 list-disc list-inside opacity-90">
+          <li>500 factures générées / mois</li>
+          <li>Validation illimitée</li>
+          <li>Facturation mensuelle, résiliable à tout moment</li>
+          <li>Paiement sécurisé via LemonSqueezy</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- Étape 1 : obtenir une clé -->
+    <section id="step-key" class="bg-white border border-slate-200 rounded-xl p-6 mb-8">
+      <h2 class="font-semibold text-lg mb-1">Étape 1 — Obtenir votre clé API</h2>
+      <p class="text-sm text-slate-500 mb-4">
+        Entrez votre e-mail : nous créons votre clé immédiatement. Elle s'affiche
+        <strong>une seule fois</strong> — conservez-la précieusement.
+      </p>
+      <form id="key-form" class="flex gap-2 max-w-md" novalidate>
+        <input type="email" id="key-email" placeholder="votre@entreprise.fr"
+               class="flex-1 px-3 py-2 border border-slate-300 rounded-lg text-sm">
+        <button type="submit" id="key-submit"
+                class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm hover:bg-blue-700 font-medium">
+          Obtenir ma clé
+        </button>
+      </form>
+      <div id="key-message" class="mt-3 max-w-md text-sm" aria-live="polite"></div>
+
+      <!-- Clé obtenue (affichée une seule fois) -->
+      <div id="key-revealed" class="hidden mt-4 max-w-md bg-emerald-50 border border-emerald-300 rounded-lg p-4">
+        <p class="text-sm font-medium text-emerald-900 mb-2">Votre clé API (ne sera plus affichée) :</p>
+        <code id="key-value" class="block text-sm bg-white border border-emerald-200 rounded p-2 break-all select-all"></code>
+        <p class="text-xs text-emerald-800 mt-2">
+          Elle est aussi enregistrée dans ce navigateur (localStorage).
+        </p>
+      </div>
+    </section>
+
+    <!-- Étape 2 : souscrire -->
+    <section id="step-subscribe" class="bg-white border border-slate-200 rounded-xl p-6 mb-12">
+      <h2 class="font-semibold text-lg mb-1">Étape 2 — Passer en Pro</h2>
+      <p class="text-sm text-slate-500 mb-4">
+        Obtenez d'abord votre clé ci-dessus, puis souscrivez : votre clé passe en plan Pro
+        automatiquement après le paiement.
+      </p>
+      <button type="button" id="subscribe-btn" disabled
+              class="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700
+                     disabled:bg-slate-300 disabled:cursor-not-allowed">
+        Souscrire — 9 $/mois
+      </button>
+      <p id="subscribe-note" class="text-xs text-slate-400 mt-2"></p>
+    </section>
+  </main>
+
+  <footer class="bg-white border-t border-slate-200">
+    <div class="max-w-3xl mx-auto px-4 py-6 text-sm text-slate-500">
+      © 2026 Factur-X API — Conformité EN 16931 / Factur-X.
+      Paiements traités par <a href="https://www.lemonsqueezy.com" class="underline">LemonSqueezy</a>.
+    </div>
+  </footer>
+
+  <script th:inline="javascript">
+    const CHECKOUT_URL = /*[[${checkoutUrl}]]*/ '';
+    const LS_KEY_STORAGE = 'facturx_api_key';
+
+    const keyForm = document.getElementById('key-form');
+    const keyEmail = document.getElementById('key-email');
+    const keyMessage = document.getElementById('key-message');
+    const keyRevealed = document.getElementById('key-revealed');
+    const keyValue = document.getElementById('key-value');
+    const subscribeBtn = document.getElementById('subscribe-btn');
+    const subscribeNote = document.getElementById('subscribe-note');
+
+    function setErr(msg) {
+      keyMessage.innerHTML = '<p class="text-red-700 bg-red-50 border border-red-200 rounded p-2"></p>';
+      keyMessage.firstChild.textContent = msg;
+    }
+    function setOk(msg) {
+      keyMessage.innerHTML = '<p class="text-emerald-800 bg-emerald-50 border border-emerald-200 rounded p-2"></p>';
+      keyMessage.firstChild.textContent = msg;
+    }
+
+    // Déjà une clé en local : propose directement la souscription
+    const stored = localStorage.getItem(LS_KEY_STORAGE);
+    if (stored) {
+      keyValue.textContent = stored;
+      keyRevealed.classList.remove('hidden');
+      setOk('Clé déjà obtenue dans ce navigateur. Vous pouvez souscrire directement.');
+      enableSubscribe(stored);
+    }
+
+    function enableSubscribe(key) {
+      if (!CHECKOUT_URL) {
+        subscribeNote.textContent = 'Souscription bientôt disponible.';
+        return;
+      }
+      subscribeBtn.disabled = false;
+      subscribeBtn.addEventListener('click', () => {
+        const email = encodeURIComponent(localStorage.getItem('facturx_api_email') || '');
+        const url = CHECKOUT_URL
+          + (CHECKOUT_URL.includes('?') ? '&' : '?')
+          + 'checkout[custom][api_key]=' + encodeURIComponent(key)
+          + '&checkout[email]=' + email;
+        window.location.href = url;
+      });
+    }
+
+    keyForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = keyEmail.value.trim();
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        setErr('Veuillez saisir une adresse e-mail valide.');
+        return;
+      }
+      document.getElementById('key-submit').disabled = true;
+      try {
+        const resp = await fetch('/api/keys', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({email: email})
+        });
+        const data = await resp.json().catch(() => ({}));
+        if (resp.status === 201 && data.apiKey) {
+          localStorage.setItem(LS_KEY_STORAGE, data.apiKey);
+          localStorage.setItem('facturx_api_email', email);
+          keyValue.textContent = data.apiKey;
+          keyRevealed.classList.remove('hidden');
+          setOk('Clé créée ! Conservez-la : elle ne sera plus affichée.');
+          enableSubscribe(data.apiKey);
+        } else if (resp.status === 409) {
+          setErr('Une clé active existe déjà pour cet e-mail. '
+            + 'Utilisez la clé que vous avez conservée — si perdue, contactez le support.');
+        } else if (resp.status === 429) {
+          setErr('Trop de demandes. Réessayez dans une heure.');
+        } else {
+          setErr(data.error || 'Une erreur est survenue. Réessayez.');
+        }
+      } catch (err) {
+        setErr('Erreur réseau. Réessayez.');
+      } finally {
+        document.getElementById('key-submit').disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

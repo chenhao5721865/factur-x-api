@@ -18,3 +18,8 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+
+app:
+  lemonsqueezy:
+    # LS Test mode checkout URL（产品 "Factur-X API Pro"），空则 Souscrire 按钮隐藏
+    checkout-url: ${LS_CHECKOUT_URL:}

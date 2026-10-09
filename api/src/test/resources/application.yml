@@ -11,3 +11,7 @@ spring:
     show-sql: false
   flyway:
     enabled: false
+
+app:
+  lemonsqueezy:
+    webhook-secret: test-webhook-secret

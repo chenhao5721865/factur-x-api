@@ -18,6 +18,7 @@ services:
       DB_NAME: facturx
       DB_USER: facturx
       DB_PASSWORD: ${POSTGRES_PASSWORD}
+      LS_CHECKOUT_URL: ${LS_CHECKOUT_URL:-}
     depends_on:
       db:
         condition: service_healthy
@@ -39,6 +40,7 @@ services:
       DB_NAME: facturx
       DB_USER: facturx
       DB_PASSWORD: ${POSTGRES_PASSWORD}
+      LS_WEBHOOK_SECRET: ${LS_WEBHOOK_SECRET:-}
     depends_on:
       db:
         condition: service_healthy

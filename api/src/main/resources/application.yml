@@ -24,3 +24,14 @@ spring:
     baseline-on-migrate: true
     # baseline 默认 version=1 会把 V1 迁移标记为已应用导致不执行，必须降到 0
     baseline-version: 0
+
+app:
+  quota:
+    free-monthly: ${QUOTA_FREE_MONTHLY:5}
+    pro-monthly: ${QUOTA_PRO_MONTHLY:500}
+    upgrade-url: ${UPGRADE_URL:https://factur-x-api.com/tarifs}
+  keys:
+    ip-limit-per-hour: ${KEYS_IP_LIMIT_PER_HOUR:5}
+  lemonsqueezy:
+    # 空则 webhook 端点 503 fail closed（订阅永不生效——上线检查项！）
+    webhook-secret: ${LS_WEBHOOK_SECRET:}

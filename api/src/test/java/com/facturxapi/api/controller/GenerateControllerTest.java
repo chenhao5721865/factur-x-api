@@ -2,6 +2,7 @@ package com.facturxapi.api.controller;
 
 import com.facturxapi.api.entity.ApiKey;
 import com.facturxapi.api.repository.ApiKeyRepository;
+import com.facturxapi.api.repository.ApiUsageRepository;
 import com.facturxapi.validator.FacturxValidator;
 import java.nio.charset.StandardCharsets;
 import java.time.OffsetDateTime;
@@ -33,11 +34,15 @@ class GenerateControllerTest {
     private ApiKeyRepository apiKeyRepository;
 
     @Autowired
+    private ApiUsageRepository apiUsageRepository;
+
+    @Autowired
     private FacturxValidator validator;
 
     @BeforeEach
     void setUp() {
-        apiKeyRepository.findByToken(VALID_API_KEY).ifPresent(apiKeyRepository::delete);
+        apiUsageRepository.deleteAll(); // 先清用量（FK 指向 api_keys），再清 key
+        apiKeyRepository.deleteAll();
         ApiKey key = new ApiKey();
         key.setEmail("gen@example.com");
         key.setToken(VALID_API_KEY);
@@ -257,5 +262,50 @@ class GenerateControllerTest {
 
         assertThat(text).contains("<ram:RateApplicablePercent>0</ram:RateApplicablePercent>");
         assertThat(validator.validate(xml).valid()).isTrue();
+    }
+
+    @Test
+    void successResponse_includesRateLimitHeaders() throws Exception {
+        mockMvc.perform(gen(VALID_JSON))
+            .andExpect(status().isOk())
+            .andExpect(header().string("X-RateLimit-Limit", "5"))
+            .andExpect(header().string("X-RateLimit-Remaining", "4"));
+    }
+
+    @Test
+    void freeKey_sixthCallWithinMonth_returns402() throws Exception {
+        for (int i = 0; i < 5; i++) {
+            mockMvc.perform(gen(VALID_JSON)).andExpect(status().isOk());
+        }
+        mockMvc.perform(gen(VALID_JSON))
+            .andExpect(status().isPaymentRequired())
+            .andExpect(header().exists("Retry-After"))
+            .andExpect(header().string("X-RateLimit-Remaining", "0"))
+            .andExpect(jsonPath("$.error").exists())
+            .andExpect(jsonPath("$.upgrade_url").value("https://factur-x-api.com/tarifs"));
+    }
+
+    @Test
+    void validationError_beforeQuotaCheck_doesNotConsumeQuota() throws Exception {
+        mockMvc.perform(gen("{not json")).andExpect(status().isBadRequest());
+        mockMvc.perform(gen(VALID_JSON))
+            .andExpect(status().isOk())
+            .andExpect(header().string("X-RateLimit-Remaining", "4"));
+    }
+
+    @Test
+    void failedGeneration_afterQuotaCheck_stillConsumesQuota() throws Exception {
+        // BR-CO-26 在配额检查之后抛出：失败也扣额
+        String noIdentifier = """
+            {"invoiceNumber": "X", "issueDate": "2026-10-08", "currency": "EUR",
+             "seller": {"name": "S", "countryCode": "FR"},
+             "buyer": {"name": "B", "countryCode": "FR"},
+             "lines": [{"description": "x", "quantity": 1, "unitPrice": 1, "vatRate": 20}]}
+            """;
+        mockMvc.perform(gen(noIdentifier)).andExpect(status().isBadRequest());
+        // 已扣 1 额：成功调用后 remaining 应为 3
+        mockMvc.perform(gen(VALID_JSON))
+            .andExpect(status().isOk())
+            .andExpect(header().string("X-RateLimit-Remaining", "3"));
     }
 }
