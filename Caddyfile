@@ -6,6 +6,10 @@
 
 factur-x-api.com, www.factur-x-api.com {
 	encode zstd gzip
+	# 访问日志（JSON 到 stdout，docker logs 可见；compose 已限制 10m×3 滚动）
+	log {
+		format json
+	}
 	# 白名单：校验/生成/健康检查 + 公开领 key + LS webhook；/api/admin/* 不对外（发 key 须 SSH 走内网）
 	@api path /api/validate /api/generate /api/health /api/keys /api/webhook/lemonsqueezy
 	handle @api {
