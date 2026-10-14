@@ -10,6 +10,9 @@ factur-x-api.com, www.factur-x-api.com {
 	log {
 		format json
 	}
+	# Reddit Markdown 会把链接结尾的 ) 吞进 URL，接住这些 404 访客
+	redir /validateur-factur-x) /validateur-factur-x 301
+	redir /docs) /docs 301
 	# 白名单：校验/生成/健康检查 + 公开领 key + LS webhook；/api/admin/* 不对外（发 key 须 SSH 走内网）
 	@api path /api/validate /api/generate /api/health /api/keys /api/webhook/lemonsqueezy
 	handle @api {
