@@ -52,7 +52,7 @@ class ValidateurControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name("validateur"))
                 .andExpect(content().string(containsString("lang=\"fr\"")))
-                .andExpect(content().string(containsString("Valider un fichier Factur-X en ligne")));
+                .andExpect(content().string(containsString("Vos factures sont-elles conformes au format Factur-X")));
     }
 
     @Test
