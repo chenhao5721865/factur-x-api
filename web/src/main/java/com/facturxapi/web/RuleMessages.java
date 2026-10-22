@@ -9,6 +9,8 @@ import java.util.Map;
 public final class RuleMessages {
 
     private static final Map<String, String> FR = Map.ofEntries(
+        // 本项目建议级检查（非 EN 16931）
+        Map.entry("FX-W01", "La facture contient des coordonnées de paiement (IBAN) mais aucun PaymentReference (BT-83) : l'acheteur ne peut pas rattacher son paiement à cette facture."),
         // golden 实测触发
         Map.entry("BR-07", "La facture doit contenir le nom de l'acheteur (BT-44)."),
         Map.entry("BR-10", "Une ligne de facture doit contenir le nom de l'article (BT-153)."),
