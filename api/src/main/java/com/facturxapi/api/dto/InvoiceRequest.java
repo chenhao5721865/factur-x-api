@@ -20,7 +20,9 @@ public record InvoiceRequest(
     @NotNull @Valid PartyRequest buyer,
     @NotEmpty @Valid List<LineItemRequest> lines,
     @Valid PaymentRequest payment,
-    String note                            // BT-22
+    String note,                           // BT-22
+    String vatExemptionReason,             // BT-120：E/AE/K/G 类别必填（BR-E-10 等）
+    LocalDate deliveryDate                 // BT-72：K 类别必填（BR-IC-11，实际交付日期）
 ) {
     public InvoiceRequest {
         if (typeCode == null || typeCode.isBlank()) {

@@ -1,0 +1,23 @@
+{
+  "invoiceNumber": "FIX-G-INVALID",
+  "issueDate": "2026-10-08",
+  "currency": "EUR",
+  "seller": {
+    "name": "Ma Société SARL",
+    "countryCode": "FR",
+    "vatId": "FR12345678901"
+  },
+  "buyer": {
+    "name": "US Customer Inc",
+    "countryCode": "US"
+  },
+  "lines": [
+    {
+      "description": "Export supply",
+      "quantity": 1,
+      "unitPrice": 100.0,
+      "vatRate": 0,
+      "vatCategoryCode": "G"
+    }
+  ]
+}

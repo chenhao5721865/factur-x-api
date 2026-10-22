@@ -106,6 +106,8 @@
             <tr><td class="px-3 py-2 font-mono">lines[]</td><td class="px-3 py-2">oui</td><td class="px-3 py-2">Au moins une ligne (voir ci-dessous)</td></tr>
             <tr><td class="px-3 py-2 font-mono">payment</td><td class="px-3 py-2">non</td><td class="px-3 py-2"><code>iban</code> (BT-91), <code>paymentReference</code> (BT-83), <code>dueDate</code> (BT-9)</td></tr>
             <tr><td class="px-3 py-2 font-mono">note</td><td class="px-3 py-2">non</td><td class="px-3 py-2">Note libre (BT-22)</td></tr>
+            <tr><td class="px-3 py-2 font-mono">vatExemptionReason</td><td class="px-3 py-2">selon catégorie</td><td class="px-3 py-2">Motif d'exonération (BT-120) — requis pour <code>E</code>, <code>AE</code>, <code>K</code>, <code>G</code> (BR-E-10 / BR-AE-10 / BR-IC-10 / BR-G-10)</td></tr>
+            <tr><td class="px-3 py-2 font-mono">deliveryDate</td><td class="px-3 py-2">selon catégorie</td><td class="px-3 py-2">Date de livraison effective (BT-72) — requise pour <code>K</code> (BR-IC-11)</td></tr>
           </tbody>
         </table>
       </div>
@@ -141,13 +143,17 @@
             <tr><td class="px-3 py-2 font-mono">unitPrice</td><td class="px-3 py-2">oui</td><td class="px-3 py-2">Prix unitaire <strong>HT</strong> (hors TVA) (BT-146)</td></tr>
             <tr><td class="px-3 py-2 font-mono">vatRate</td><td class="px-3 py-2">oui</td><td class="px-3 py-2">Taux de TVA en %, ex. <code>20</code> (BT-152)</td></tr>
             <tr><td class="px-3 py-2 font-mono">unitCode</td><td class="px-3 py-2">non</td><td class="px-3 py-2">Unité UN/ECE, défaut <code>C62</code> (pièce) (BT-130)</td></tr>
-            <tr><td class="px-3 py-2 font-mono">vatCategoryCode</td><td class="px-3 py-2">non</td><td class="px-3 py-2">Catégorie TVA, défaut <code>S</code>. Taux 0 % → <code>Z</code> (exonéré) (BT-151)</td></tr>
+            <tr><td class="px-3 py-2 font-mono">vatCategoryCode</td><td class="px-3 py-2">non</td><td class="px-3 py-2">Catégorie TVA, défaut <code>S</code>. Valeurs : <code>S</code>, <code>Z</code> (taux 0), <code>E</code> (exonéré), <code>AE</code> (autoliquidation), <code>K</code> (livraison intracommunautaire), <code>G</code> (export) (BT-151)</td></tr>
           </tbody>
         </table>
         <p class="text-xs text-slate-500 mt-1">
           Les montants totaux (HT, TVA, TTC) sont calculés côté serveur : il n'y a rien à fournir,
-          et aucune incohérence n'est possible. ⚠️ Une ligne <code>vatRate: 0</code> avec la catégorie
-          par défaut <code>S</code> viole la règle BR-S-05 : utilisez <code>vatCategoryCode: "Z"</code>.
+          et aucune incohérence n'est possible. Les entrées incohérentes sont rejetées avec une
+          erreur <code>400</code> qui nomme la règle, le champ et la correction : une ligne
+          <code>vatRate: 0</code> avec la catégorie par défaut <code>S</code> viole BR-S-05 et
+          renvoie immédiatement une 400 (utilisez <code>vatCategoryCode: "Z"</code>). Le taux 0 %
+          est obligatoire pour <code>Z</code>/<code>E</code>/<code>AE</code>/<code>K</code>/<code>G</code>,
+          et le taux doit être &gt; 0 pour <code>S</code>.
         </p>
       </div>
 

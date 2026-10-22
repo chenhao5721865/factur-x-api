@@ -265,6 +265,175 @@ class GenerateControllerTest {
     }
 
     @Test
+    void zeroRate_withDefaultCategoryS_returns400_brS05_withSuggestion() throws Exception {
+        String json = """
+            {"invoiceNumber": "S-ZERO-1", "issueDate": "2026-10-08", "currency": "EUR",
+             "seller": {"name": "S", "countryCode": "FR", "vatId": "FR1"},
+             "buyer": {"name": "B", "countryCode": "FR"},
+             "lines": [{"description": "x", "quantity": 1, "unitPrice": 50, "vatRate": 0}]}
+            """;
+        mockMvc.perform(gen(json))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.error").value(
+                "lines[0]: vatRate 0 with category \"S\" violates BR-S-05 (standard-rated lines "
+                    + "require a VAT rate > 0). Either provide a non-zero vatRate, or set lines[0]"
+                    + ".vatCategoryCode to \"Z\" (zero-rated), \"E\" (exempt from VAT), \"AE\" "
+                    + "(reverse charge), \"K\" (intra-community supply) or \"G\" (export outside the EU)."));
+    }
+
+    @Test
+    void unknownCategory_returns400() throws Exception {
+        String json = """
+            {"invoiceNumber": "BAD-CAT", "issueDate": "2026-10-08", "currency": "EUR",
+             "seller": {"name": "S", "countryCode": "FR", "vatId": "FR1"},
+             "buyer": {"name": "B", "countryCode": "FR"},
+             "lines": [{"description": "x", "quantity": 1, "unitPrice": 50, "vatRate": 20,
+                        "vatCategoryCode": "Standard"}]}
+            """;
+        mockMvc.perform(gen(json))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.error").value(
+                "lines[0].vatCategoryCode \"Standard\" is not a valid EN 16931 category. "
+                    + "Allowed: S, Z, E, AE, K, G."));
+    }
+
+    @Test
+    void nonzeroRate_withCategoryZ_returns400_brZ05() throws Exception {
+        String json = """
+            {"invoiceNumber": "Z-20", "issueDate": "2026-10-08", "currency": "EUR",
+             "seller": {"name": "S", "countryCode": "FR", "vatId": "FR1"},
+             "buyer": {"name": "B", "countryCode": "FR"},
+             "lines": [{"description": "x", "quantity": 1, "unitPrice": 50, "vatRate": 20,
+                        "vatCategoryCode": "Z"}]}
+            """;
+        mockMvc.perform(gen(json))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.error").value(
+                "lines[0]: category \"Z\" (zero-rated) requires vatRate 0 (BR-Z-05). "
+                    + "If this line carries VAT at 20%, use category \"S\" instead."));
+    }
+
+    @Test
+    void exempt_withoutReason_returns400_brE10() throws Exception {
+        String json = """
+            {"invoiceNumber": "E-NOREASON", "issueDate": "2026-10-08", "currency": "EUR",
+             "seller": {"name": "S", "countryCode": "FR", "vatId": "FR1"},
+             "buyer": {"name": "B", "countryCode": "FR"},
+             "lines": [{"description": "x", "quantity": 1, "unitPrice": 50, "vatRate": 0,
+                        "vatCategoryCode": "E"}]}
+            """;
+        mockMvc.perform(gen(json))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.error").value(
+                "vatExemptionReason is required when lines use category E, AE, K or G "
+                    + "(BR-E-10 / BR-AE-10 / BR-IC-10 / BR-G-10). "
+                    + "Example: \"Reverse charge — Article 196 of Council Directive 2006/112/EC\"."));
+    }
+
+    @Test
+    void exempt_withReason_returns200_validXml() throws Exception {
+        String json = """
+            {"invoiceNumber": "E-OK", "issueDate": "2026-10-08", "currency": "EUR",
+             "seller": {"name": "S", "countryCode": "FR", "vatId": "FR1"},
+             "buyer": {"name": "B", "countryCode": "FR"},
+             "lines": [{"description": "x", "quantity": 1, "unitPrice": 50, "vatRate": 0,
+                        "vatCategoryCode": "E"}],
+             "vatExemptionReason": "Exempt as art. 262 ter I of the French CGI"}
+            """;
+        byte[] xml = generateValidXml(json);
+        String text = new String(xml, StandardCharsets.UTF_8);
+
+        assertThat(text).contains(
+            "<ram:ExemptionReason>Exempt as art. 262 ter I of the French CGI</ram:ExemptionReason>");
+        assertThat(validator.validate(xml).valid()).isTrue();
+    }
+
+    @Test
+    void reverseCharge_withoutBuyerVatId_returns400_brAe02() throws Exception {
+        String json = """
+            {"invoiceNumber": "AE-NOVAT", "issueDate": "2026-10-08", "currency": "EUR",
+             "seller": {"name": "S", "countryCode": "FR", "vatId": "FR1"},
+             "buyer": {"name": "B", "countryCode": "DE"},
+             "lines": [{"description": "x", "quantity": 1, "unitPrice": 50, "vatRate": 0,
+                        "vatCategoryCode": "AE"}],
+             "vatExemptionReason": "Reverse charge"}
+            """;
+        mockMvc.perform(gen(json))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.error").value(
+                "buyer.vatId is required when lines use category AE or K "
+                    + "(BR-AE-02 / BR-IC-02: reverse charge and intra-community supply "
+                    + "require both seller and buyer VAT identifiers)."));
+    }
+
+    @Test
+    void reverseCharge_full_returns200_validXml() throws Exception {
+        String json = """
+            {"invoiceNumber": "AE-OK", "issueDate": "2026-10-08", "currency": "EUR",
+             "seller": {"name": "S", "countryCode": "FR", "vatId": "FR12345678901"},
+             "buyer": {"name": "B", "countryCode": "DE", "vatId": "DE123456789"},
+             "lines": [{"description": "x", "quantity": 1, "unitPrice": 50, "vatRate": 0,
+                        "vatCategoryCode": "AE"}],
+             "vatExemptionReason": "Reverse charge — Article 196 of Council Directive 2006/112/EC"}
+            """;
+        byte[] xml = generateValidXml(json);
+        String text = new String(xml, StandardCharsets.UTF_8);
+
+        assertThat(text).contains("<ram:CategoryCode>AE</ram:CategoryCode>");
+        assertThat(validator.validate(xml).valid()).isTrue();
+    }
+
+    @Test
+    void intraCommunity_withoutDeliveryDate_returns400_brIc11() throws Exception {
+        String json = """
+            {"invoiceNumber": "K-NODATE", "issueDate": "2026-10-08", "currency": "EUR",
+             "seller": {"name": "S", "countryCode": "FR", "vatId": "FR12345678901"},
+             "buyer": {"name": "B", "countryCode": "DE", "vatId": "DE123456789"},
+             "lines": [{"description": "x", "quantity": 1, "unitPrice": 50, "vatRate": 0,
+                        "vatCategoryCode": "K"}],
+             "vatExemptionReason": "Intra-community supply"}
+            """;
+        mockMvc.perform(gen(json))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.error").value(
+                "deliveryDate is required when lines use category K "
+                    + "(BR-IC-11: intra-community supply requires the actual delivery date, BT-72)."));
+    }
+
+    @Test
+    void intraCommunity_full_returns200_validXml() throws Exception {
+        String json = """
+            {"invoiceNumber": "K-OK", "issueDate": "2026-10-08", "currency": "EUR",
+             "seller": {"name": "S", "countryCode": "FR", "vatId": "FR12345678901"},
+             "buyer": {"name": "B", "countryCode": "DE", "vatId": "DE123456789"},
+             "lines": [{"description": "x", "quantity": 1, "unitPrice": 50, "vatRate": 0,
+                        "vatCategoryCode": "K"}],
+             "vatExemptionReason": "Intra-community supply",
+             "deliveryDate": "2026-10-05"}
+            """;
+        byte[] xml = generateValidXml(json);
+        String text = new String(xml, StandardCharsets.UTF_8);
+
+        assertThat(text).contains("<ram:CategoryCode>K</ram:CategoryCode>");
+        assertThat(text).contains("<udt:DateTimeString format=\"102\">20261005</udt:DateTimeString>");
+        assertThat(validator.validate(xml).valid()).isTrue();
+    }
+
+    @Test
+    void export_withReason_returns200_validXml() throws Exception {
+        String json = """
+            {"invoiceNumber": "G-OK", "issueDate": "2026-10-08", "currency": "EUR",
+             "seller": {"name": "S", "countryCode": "FR", "vatId": "FR1"},
+             "buyer": {"name": "B", "countryCode": "US"},
+             "lines": [{"description": "x", "quantity": 1, "unitPrice": 50, "vatRate": 0,
+                        "vatCategoryCode": "G"}],
+             "vatExemptionReason": "Export outside the EU"}
+            """;
+        byte[] xml = generateValidXml(json);
+        assertThat(validator.validate(xml).valid()).isTrue();
+    }
+
+    @Test
     void successResponse_includesRateLimitHeaders() throws Exception {
         mockMvc.perform(gen(VALID_JSON))
             .andExpect(status().isOk())

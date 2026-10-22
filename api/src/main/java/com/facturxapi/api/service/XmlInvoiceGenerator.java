@@ -30,12 +30,95 @@ public class XmlInvoiceGenerator {
 
     private static final DateTimeFormatter DATE_102 = DateTimeFormatter.ofPattern("yyyyMMdd");
 
+    /** EN 16931 允许的行级别 VAT 类别（BT-151）。 */
+    private static final java.util.Set<String> VALID_CATEGORIES =
+        java.util.Set.of("S", "Z", "E", "AE", "K", "G");
+    /** 需要豁免理由（BT-120）的类别：BR-E-10 / BR-AE-10 / BR-IC-10 / BR-G-10。 */
+    private static final java.util.Set<String> EXEMPT_REASON_CATEGORIES =
+        java.util.Set.of("E", "AE", "K", "G");
+
+    /**
+     * 类别感知的输入校验：不一致的输入在入口拒绝（400 + rule ID + 字段路径 + 修复建议），
+     * 而不是拖到自校验才失败。规则依据 EN 16931：
+     * S 要求税率>0（BR-S-05）；Z/E/AE/K/G 要求税率=0（BR-Z-05 等）；
+     * E/AE/K/G 要求豁免理由（BR-E-10 等）；AE/K 要求买方 VAT 号（BR-AE-02 / BR-IC-02）；
+     * K 要求实际交付日期（BR-IC-11）。
+     */
+    private static void validateCategories(InvoiceRequest req) {
+        boolean needsExemptionReason = false;
+        boolean needsBuyerVatId = false;
+        boolean needsDeliveryDate = false;
+        for (int i = 0; i < req.lines().size(); i++) {
+            LineItemRequest line = req.lines().get(i);
+            String cat = line.vatCategoryCode();
+            String path = "lines[" + i + "]";
+            if (!VALID_CATEGORIES.contains(cat)) {
+                throw new IllegalArgumentException(path + ".vatCategoryCode \"" + cat
+                    + "\" is not a valid EN 16931 category. Allowed: S, Z, E, AE, K, G.");
+            }
+            int rateSign = line.vatRate().compareTo(BigDecimal.ZERO);
+            switch (cat) {
+                case "S" -> {
+                    if (rateSign <= 0) {
+                        throw new IllegalArgumentException(path
+                            + ": vatRate 0 with category \"S\" violates BR-S-05 (standard-rated lines require a VAT rate > 0). "
+                            + "Either provide a non-zero vatRate, or set " + path
+                            + ".vatCategoryCode to \"Z\" (zero-rated), \"E\" (exempt from VAT), "
+                            + "\"AE\" (reverse charge), \"K\" (intra-community supply) or \"G\" (export outside the EU).");
+                    }
+                }
+                case "Z" -> {
+                    if (rateSign != 0) {
+                        throw new IllegalArgumentException(path
+                            + ": category \"Z\" (zero-rated) requires vatRate 0 (BR-Z-05). "
+                            + "If this line carries VAT at " + line.vatRate().toPlainString()
+                            + "%, use category \"S\" instead.");
+                    }
+                }
+                case "E", "AE", "K", "G" -> {
+                    if (rateSign != 0) {
+                        throw new IllegalArgumentException(path
+                            + ": category \"" + cat + "\" requires vatRate 0. "
+                            + "If this line carries VAT at " + line.vatRate().toPlainString()
+                            + "%, use category \"S\" instead.");
+                    }
+                    needsExemptionReason = true;
+                    if ("AE".equals(cat) || "K".equals(cat)) {
+                        needsBuyerVatId = true;
+                    }
+                    if ("K".equals(cat)) {
+                        needsDeliveryDate = true;
+                    }
+                }
+                default -> throw new IllegalStateException("unreachable category: " + cat);
+            }
+        }
+        if (needsExemptionReason && isBlank(req.vatExemptionReason())) {
+            throw new IllegalArgumentException(
+                "vatExemptionReason is required when lines use category E, AE, K or G "
+                    + "(BR-E-10 / BR-AE-10 / BR-IC-10 / BR-G-10). "
+                    + "Example: \"Reverse charge — Article 196 of Council Directive 2006/112/EC\".");
+        }
+        if (needsBuyerVatId && isBlank(req.buyer().vatId())) {
+            throw new IllegalArgumentException(
+                "buyer.vatId is required when lines use category AE or K "
+                    + "(BR-AE-02 / BR-IC-02: reverse charge and intra-community supply "
+                    + "require both seller and buyer VAT identifiers).");
+        }
+        if (needsDeliveryDate && req.deliveryDate() == null) {
+            throw new IllegalArgumentException(
+                "deliveryDate is required when lines use category K "
+                    + "(BR-IC-11: intra-community supply requires the actual delivery date, BT-72).");
+        }
+    }
+
     public byte[] generate(InvoiceRequest req) {
         // BR-CO-26：卖方须至少一个标识符（vatId 或 legalOrgId）
         if (isBlank(req.seller().vatId()) && isBlank(req.seller().legalOrgId())) {
             throw new IllegalArgumentException(
                 "Seller must provide at least one of vatId or legalOrgId (BR-CO-26)");
         }
+        validateCategories(req);
         Totals totals = InvoiceAmountCalculator.compute(req.lines());
 
         ByteArrayOutputStream out = new ByteArrayOutputStream(4096);
@@ -94,7 +177,9 @@ public class XmlInvoiceGenerator {
             writeLineItem(w, i + 1, lines.get(i), totals.lineTotals().get(i));
         }
         writeHeaderAgreement(w, req);
-        w.writeEmptyElement("ram", "ApplicableHeaderTradeDelivery", NS_RAM);
+        boolean hasIntraCommunitySupply = lines.stream()
+            .anyMatch(l -> "K".equals(l.vatCategoryCode()));
+        writeHeaderDelivery(w, req, hasIntraCommunitySupply);
         writeHeaderSettlement(w, req, totals);
         w.writeEndElement();
     }
@@ -178,6 +263,36 @@ public class XmlInvoiceGenerator {
         w.writeEndElement();
     }
 
+    /**
+     * ApplicableHeaderTradeDelivery：有 deliveryDate 才输出 ActualDeliverySupplyChainEvent
+     * （BT-72）；K 类别必须输出 ShipToTradeParty 的国家码（BR-IC-12，BT-80），复用买方信息。
+     */
+    private void writeHeaderDelivery(XMLStreamWriter w, InvoiceRequest req, boolean intraCommunity)
+            throws XMLStreamException {
+        if (!intraCommunity && req.deliveryDate() == null) {
+            w.writeEmptyElement("ram", "ApplicableHeaderTradeDelivery", NS_RAM);
+            return;
+        }
+        w.writeStartElement("ram", "ApplicableHeaderTradeDelivery", NS_RAM);
+        if (intraCommunity) {
+            // CII-SR 禁止 ShipToTradeParty 携带法律组织/税号：只输出 Name + 国家
+            w.writeStartElement("ram", "ShipToTradeParty", NS_RAM);
+            el(w, "Name", req.buyer().name());
+            w.writeStartElement("ram", "PostalTradeAddress", NS_RAM);
+            el(w, "CountryID", req.buyer().countryCode());
+            w.writeEndElement();
+            w.writeEndElement();
+        }
+        if (req.deliveryDate() != null) {
+            w.writeStartElement("ram", "ActualDeliverySupplyChainEvent", NS_RAM);
+            w.writeStartElement("ram", "OccurrenceDateTime", NS_RAM);
+            dateTimeString(w, req.deliveryDate().format(DATE_102));
+            w.writeEndElement();
+            w.writeEndElement();
+        }
+        w.writeEndElement();
+    }
+
     private void writeHeaderSettlement(XMLStreamWriter w, InvoiceRequest req, Totals totals)
             throws XMLStreamException {
         PaymentRequest payment = req.payment();
@@ -201,6 +316,10 @@ public class XmlInvoiceGenerator {
             w.writeStartElement("ram", "ApplicableTradeTax", NS_RAM);
             el(w, "CalculatedAmount", fmt(g.calculatedAmount()));
             el(w, "TypeCode", "VAT");
+            if (EXEMPT_REASON_CATEGORIES.contains(g.categoryCode())
+                    && !isBlank(req.vatExemptionReason())) {
+                el(w, "ExemptionReason", req.vatExemptionReason()); // BT-120
+            }
             el(w, "BasisAmount", fmt(g.basisAmount()));
             el(w, "CategoryCode", g.categoryCode());
             el(w, "RateApplicablePercent", fmt(g.rate()));

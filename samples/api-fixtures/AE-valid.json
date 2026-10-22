@@ -1,0 +1,25 @@
+{
+  "invoiceNumber": "FIX-AE-VALID",
+  "issueDate": "2026-10-08",
+  "currency": "EUR",
+  "seller": {
+    "name": "Ma Société SARL",
+    "countryCode": "FR",
+    "vatId": "FR12345678901"
+  },
+  "buyer": {
+    "name": "Kunde GmbH",
+    "countryCode": "DE",
+    "vatId": "DE123456789"
+  },
+  "lines": [
+    {
+      "description": "Reverse-charge supply",
+      "quantity": 1,
+      "unitPrice": 100.0,
+      "vatRate": 0,
+      "vatCategoryCode": "AE"
+    }
+  ],
+  "vatExemptionReason": "Reverse charge — Article 196 of Council Directive 2006/112/EC"
+}
