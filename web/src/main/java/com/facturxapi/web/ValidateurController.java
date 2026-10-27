@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import com.facturxapi.validator.ExtractionException;
 import com.facturxapi.validator.FacturxValidator;
@@ -124,7 +125,7 @@ public class ValidateurController {
     private static void addRulePageSlugs(Model model) {
         model.addAttribute("rulePageSlugs",
                 RulePages.all().stream().map(c -> RulePages.slugOf(c.ruleId()))
-                        .collect(java.util.stream.Collectors.toUnmodifiableSet()));
+                        .collect(Collectors.toUnmodifiableSet()));
     }
 
     /**
