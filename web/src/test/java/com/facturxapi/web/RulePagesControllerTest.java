@@ -38,6 +38,6 @@ class RulePagesControllerTest {
         mvc.perform(get("/regles"))
                 .andExpect(status().isOk())
                 .andExpect(view().name("regles"))
-                .andExpect(content().string(containsString("BR-CO-15")));
+                .andExpect(content().string(containsString("href=\"/regles/br-co-10\"")));
     }
 }
