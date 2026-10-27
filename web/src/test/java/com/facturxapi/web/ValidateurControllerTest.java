@@ -52,7 +52,10 @@ class ValidateurControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name("validateur"))
                 .andExpect(content().string(containsString("lang=\"fr\"")))
-                .andExpect(content().string(containsString("Valider un fichier Factur-X en ligne")));
+                .andExpect(content().string(containsString("Valider un fichier Factur-X en ligne")))
+                // 文案已改现在时：法国接收义务 2026-09 已生效（勿再断言旧句 "devient obligatoire"）
+                .andExpect(content().string(containsString("obligatoire en France depuis septembre 2026")))
+                .andExpect(content().string(containsString("émises ou reçues")));
     }
 
     @Test
