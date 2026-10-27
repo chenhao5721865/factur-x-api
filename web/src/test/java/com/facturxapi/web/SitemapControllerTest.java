@@ -29,6 +29,8 @@ class SitemapControllerTest {
                 .andExpect(content().string(containsString("https://factur-x-api.com/regles/br-07")))
                 .andExpect(content().string(containsString("https://factur-x-api.com/validateur-factur-x")))
                 .andExpect(content().string(containsString("https://factur-x-api.com/tarifs")))
-                .andExpect(content().string(containsString("https://factur-x-api.com/docs")));
+                .andExpect(content().string(containsString("https://factur-x-api.com/docs")))
+                .andExpect(content().string(containsString("<priority>0.8</priority>")))
+                .andExpect(content().string(containsString("<priority>0.7</priority>")));
     }
 }

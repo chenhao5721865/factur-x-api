@@ -10,7 +10,7 @@ public class SitemapController {
 
     private static final String BASE = "https://factur-x-api.com";
 
-    @GetMapping(value = "/sitemap.xml", produces = "application/xml")
+    @GetMapping(value = "/sitemap.xml", produces = "application/xml;charset=UTF-8")
     @ResponseBody
     public String sitemap() {
         StringBuilder sb = new StringBuilder(2048);
