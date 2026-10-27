@@ -1,6 +1,7 @@
 package com.facturxapi.web;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -209,14 +210,14 @@ public final class RulePages {
     public static List<RulePageContent> all() { return PAGES; }
 
     public static RulePageContent get(String slug) {
-        return slug == null ? null : BY_SLUG.get(slug.toLowerCase());
+        return slug == null ? null : BY_SLUG.get(slug.toLowerCase(Locale.ROOT));
     }
 
     public static boolean containsRule(String ruleId) {
-        return ruleId != null && BY_SLUG.containsKey(ruleId.toLowerCase());
+        return ruleId != null && BY_SLUG.containsKey(ruleId.toLowerCase(Locale.ROOT));
     }
 
     public static String slugOf(String ruleId) {
-        return ruleId.toLowerCase();
+        return ruleId.toLowerCase(Locale.ROOT);
     }
 }

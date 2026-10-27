@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title th:text="${c.ruleId} + ' — Factur-X / EN 16931 | Factur-X API'">Règle</title>
+  <meta name="description" th:content="${c.summary}">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+  <header class="bg-white border-b border-slate-200">
+    <div class="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
+      <span class="font-bold text-lg">Factur-X API</span>
+      <nav class="text-sm space-x-4">
+        <a href="/validateur-factur-x" class="text-slate-500 hover:text-slate-800">Validateur gratuit</a>
+        <a href="/tarifs" class="text-slate-500 hover:text-slate-800">Tarifs</a>
+        <a href="/regles" class="font-medium text-blue-600">Règles</a>
+        <a href="/docs" class="text-slate-500 hover:text-slate-800">Docs</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-3xl mx-auto px-4 py-10 flex-1 w-full">
+    <nav class="text-sm text-slate-400 mb-6">
+      <a href="/" class="hover:text-slate-600">Accueil</a>
+      <span class="mx-1">/</span>
+      <a href="/regles" class="hover:text-slate-600">Règles</a>
+      <span class="mx-1">/</span>
+      <span th:text="${c.ruleId}"></span>
+    </nav>
+
+    <h1 class="text-3xl font-bold mb-4" th:text="${c.title}"></h1>
+    <p class="text-lg text-slate-700 bg-blue-50 border border-blue-200 rounded-lg p-4 mb-8"
+       th:text="${c.summary}"></p>
+
+    <section class="mb-10 whitespace-pre-line text-slate-700 leading-relaxed"
+             th:text="${c.explanation}"></section>
+
+    <section class="mb-10">
+      <h2 class="text-xl font-semibold mb-3">Exemple — non conforme puis corrigé</h2>
+      <p class="text-sm text-slate-500 mb-2">Rejeté :</p>
+      <pre class="bg-red-50 border border-red-200 text-sm rounded-lg p-4 overflow-x-auto mb-4"
+           th:text="${c.brokenXml}"></pre>
+      <p class="text-sm text-slate-500 mb-2">Corrigé :</p>
+      <pre class="bg-emerald-50 border border-emerald-200 text-sm rounded-lg p-4 overflow-x-auto"
+           th:text="${c.fixedXml}"></pre>
+    </section>
+
+    <!-- CTA -->
+    <section class="bg-white border border-slate-200 rounded-xl p-6 mb-10">
+      <p class="font-semibold mb-1">Vérifiez votre facture gratuitement</p>
+      <p class="text-sm text-slate-500 mb-4">
+        Téléversez votre facture (PDF Factur-X ou XML) et voyez immédiatement si
+        <span th:text="${c.ruleId}"></span> — ou une autre règle — est en défaut.
+      </p>
+      <div class="flex flex-wrap gap-3">
+        <a href="/validateur-factur-x"
+           class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">
+          Ouvrir le validateur
+        </a>
+        <a href="/docs"
+           class="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50">
+          Générer des factures conformes via API
+        </a>
+        <a href="/tarifs"
+           class="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50">
+          Tarifs
+        </a>
+      </div>
+    </section>
+
+    <!-- Règles liées -->
+    <section class="mb-10" th:if="${!#lists.isEmpty(c.related)}">
+      <h2 class="text-xl font-semibold mb-3">Règles liées</h2>
+      <ul class="list-disc list-inside text-sm">
+        <li th:each="rel : ${c.related}">
+          <a th:href="|/regles/${#strings.toLowerCase(rel)}|" class="text-blue-600 underline"
+             th:text="${rel}"></a>
+        </li>
+      </ul>
+    </section>
+  </main>
+
+  <footer class="bg-white border-t border-slate-200">
+    <div class="max-w-3xl mx-auto px-4 py-6 text-sm text-slate-500">
+      Factur-X API — validation EN 16931 / Factur-X. La facturation électronique est obligatoire
+      en France depuis septembre 2026.
+    </div>
+  </footer>
+</body>
+</html>

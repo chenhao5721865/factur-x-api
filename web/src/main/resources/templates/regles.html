@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Règles métier EN 16931 expliquées (BR-01 à BR-CO-15) | Factur-X API</title>
+  <meta name="description" content="Chaque règle métier EN 16931 expliquée simplement : ce qu'elle contrôle, pourquoi elle échoue et comment corriger votre facture électronique.">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+  <header class="bg-white border-b border-slate-200">
+    <div class="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
+      <span class="font-bold text-lg">Factur-X API</span>
+      <nav class="text-sm space-x-4">
+        <a href="/validateur-factur-x" class="text-slate-500 hover:text-slate-800">Validateur gratuit</a>
+        <a href="/tarifs" class="text-slate-500 hover:text-slate-800">Tarifs</a>
+        <a href="/regles" class="font-medium text-blue-600">Règles</a>
+        <a href="/docs" class="text-slate-500 hover:text-slate-800">Docs</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-3xl mx-auto px-4 py-10 flex-1 w-full">
+    <h1 class="text-3xl font-bold mb-2">Règles métier EN 16931 expliquées</h1>
+    <p class="text-slate-600 mb-8">
+      Chaque règle de validation (BR-xx) expliquée simplement : ce qu'elle contrôle, pourquoi votre
+      facture échoue et comment corriger. Retrouvez ces identifiants dans les résultats du
+      <a href="/validateur-factur-x" class="text-blue-600 underline">validateur gratuit</a>.
+    </p>
+
+    <ul class="space-y-3 mb-10">
+      <li th:each="p : ${pages}" class="bg-white border border-slate-200 rounded-lg p-4">
+        <a th:href="|/regles/${#strings.toLowerCase(p.ruleId)}|" class="font-medium text-blue-600 underline"
+           th:text="${p.title}"></a>
+        <p class="text-sm text-slate-500 mt-1" th:text="${p.summary}"></p>
+      </li>
+    </ul>
+
+    <section class="bg-white border border-slate-200 rounded-xl p-6">
+      <p class="font-semibold mb-1">Besoin de générer des factures conformes ?</p>
+      <p class="text-sm text-slate-500 mb-4">
+        L'API crée des factures EN 16931 auto-validées (XSD + Schematron). Gratuit jusqu'à 5 factures par mois.
+      </p>
+      <div class="flex flex-wrap gap-3">
+        <a href="/docs" class="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-medium hover:bg-blue-700">Documentation API</a>
+        <a href="/tarifs" class="px-4 py-2 border border-slate-300 text-slate-700 rounded-lg text-sm font-medium hover:bg-slate-50">Obtenir une clé</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="bg-white border-t border-slate-200">
+    <div class="max-w-3xl mx-auto px-4 py-6 text-sm text-slate-500">
+      Factur-X API — validation EN 16931 / Factur-X. La facturation électronique est obligatoire
+      en France depuis septembre 2026.
+    </div>
+  </footer>
+</body>
+</html>
