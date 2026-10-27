@@ -46,6 +46,7 @@ public class ValidateurController {
     @GetMapping("/validateur-factur-x")
     public String page(Model model) {
         model.addAttribute("result", null);
+        addRulePageSlugs(model);
         return "validateur";
     }
 
@@ -93,6 +94,7 @@ public class ValidateurController {
                 type, bytes.length, result.valid(), result.errors().size(), result.warnings().size(), elapsed);
 
         model.addAttribute("result", toViewModel(result));
+        addRulePageSlugs(model);
         return isHtmx(request) ? "fragments/resultat :: resultat" : "validateur";
     }
 
@@ -117,6 +119,13 @@ public class ValidateurController {
     }
 
     // ---- helpers ----
+
+    /** 有解释页的 ruleId slug 集合（小写），结果页徽章据此决定渲染 <a> 还是 <span>。 */
+    private static void addRulePageSlugs(Model model) {
+        model.addAttribute("rulePageSlugs",
+                RulePages.all().stream().map(c -> RulePages.slugOf(c.ruleId()))
+                        .collect(java.util.stream.Collectors.toUnmodifiableSet()));
+    }
 
     /**
      * 错误响应：htmx 请求返回 erreur fragment，否则整页错误视图。

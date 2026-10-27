@@ -74,6 +74,8 @@ class ValidateurControllerTest {
                 .andExpect(view().name("fragments/resultat :: resultat"))
                 .andExpect(content().string(containsString("Facture non conforme")))
                 .andExpect(content().string(containsString("BR-07")))
+                // BR-07 有解释页 → 徽章渲染为 /regles/br-07 链接
+                .andExpect(content().string(containsString("href=\"/regles/br-07\"")))
                 // Thymeleaf 会把撇号转义为 &#39;，断言用未被转义的片段
                 .andExpect(content().string(containsString("le nom de l")))
                 .andExpect(model().attributeExists("result"));
