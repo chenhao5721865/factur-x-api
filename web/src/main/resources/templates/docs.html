@@ -135,13 +135,15 @@
             <tr><td class="px-3 py-2 font-mono">unitPrice</td><td class="px-3 py-2">oui</td><td class="px-3 py-2">Prix unitaire <strong>HT</strong> (hors TVA) (BT-146)</td></tr>
             <tr><td class="px-3 py-2 font-mono">vatRate</td><td class="px-3 py-2">oui</td><td class="px-3 py-2">Taux de TVA en %, ex. <code>20</code> (BT-152)</td></tr>
             <tr><td class="px-3 py-2 font-mono">unitCode</td><td class="px-3 py-2">non</td><td class="px-3 py-2">Unité UN/ECE, défaut <code>C62</code> (pièce) (BT-130)</td></tr>
-            <tr><td class="px-3 py-2 font-mono">vatCategoryCode</td><td class="px-3 py-2">non</td><td class="px-3 py-2">Catégorie TVA, défaut <code>S</code>. Taux 0 % → <code>Z</code> (exonéré) (BT-151)</td></tr>
+            <tr><td class="px-3 py-2 font-mono">vatCategoryCode</td><td class="px-3 py-2">non</td><td class="px-3 py-2">Catégorie TVA, défaut <code>S</code>. Seules <code>S</code> et <code>Z</code> acceptées ; taux 0 % → <code>Z</code> obligatoire (BT-151)</td></tr>
           </tbody>
         </table>
         <p class="text-xs text-slate-500 mt-1">
           Les montants totaux (HT, TVA, TTC) sont calculés côté serveur : il n'y a rien à fournir,
           et aucune incohérence n'est possible. ⚠️ Une ligne <code>vatRate: 0</code> avec la catégorie
-          par défaut <code>S</code> viole la règle BR-S-05 : utilisez <code>vatCategoryCode: "Z"</code>.
+          par défaut <code>S</code> est rejetée (<code>400</code>, règle BR-S-05) : utilisez
+          <code>vatCategoryCode: "Z"</code>. Toute autre catégorie que <code>S</code>/<code>Z</code>
+          est également rejetée (<code>400</code>).
         </p>
       </div>
 
