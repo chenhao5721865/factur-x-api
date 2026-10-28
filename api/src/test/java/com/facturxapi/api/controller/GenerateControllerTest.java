@@ -369,4 +369,35 @@ class GenerateControllerTest {
             .andExpect(jsonPath("$.error").value(
                 "lines[1].vatRate: BR-S-05 — category S requires vatRate > 0. For 0% use vatCategoryCode: \"Z\""));
     }
+
+    @Test
+    void vatConsistencyError_beforeQuotaCheck_doesNotConsumeQuota() throws Exception {
+        String badJson = """
+            {"invoiceNumber": "Q-1", "issueDate": "2026-10-08", "currency": "EUR",
+             "seller": {"name": "S", "countryCode": "FR", "vatId": "FR1"},
+             "buyer": {"name": "B", "countryCode": "FR"},
+             "lines": [{"description": "x", "quantity": 1, "unitPrice": 50, "vatRate": 0}]}
+            """;
+        mockMvc.perform(gen(badJson)).andExpect(status().isBadRequest());
+        // 400 不扣额：随后成功调用的 remaining 应为 4（与 validationError_beforeQuotaCheck 同语义）
+        mockMvc.perform(gen(VALID_JSON))
+            .andExpect(status().isOk())
+            .andExpect(header().string("X-RateLimit-Remaining", "4"));
+    }
+
+    @Test
+    void lowercaseCategoryZ_isNormalized_andValid() throws Exception {
+        String json = """
+            {"invoiceNumber": "LC-1", "issueDate": "2026-10-08", "currency": "EUR",
+             "seller": {"name": "S", "countryCode": "FR", "vatId": "FR1"},
+             "buyer": {"name": "B", "countryCode": "FR"},
+             "lines": [{"description": "x", "quantity": 1, "unitPrice": 50, "vatRate": 0,
+                        "vatCategoryCode": "z"}]}
+            """;
+        byte[] xml = generateValidXml(json);
+        String text = new String(xml, StandardCharsets.UTF_8);
+
+        assertThat(text).contains("<ram:CategoryCode>Z</ram:CategoryCode>");
+        assertThat(validator.validate(xml).valid()).isTrue();
+    }
 }
