@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.PositiveOrZero;
 import java.math.BigDecimal;
+import java.util.Locale;
 
 /**
  * 发票行。unitPrice 为净单价（HT），LineID 按下标自动生成（BT-126）。
@@ -23,6 +24,9 @@ public record LineItemRequest(
         }
         if (vatCategoryCode == null || vatCategoryCode.isBlank()) {
             vatCategoryCode = "S";
+        } else {
+            // 归一化：生成器直接输出该值到 CategoryCode，EN 16931 码表为大写
+            vatCategoryCode = vatCategoryCode.trim().toUpperCase(Locale.ROOT);
         }
     }
 }

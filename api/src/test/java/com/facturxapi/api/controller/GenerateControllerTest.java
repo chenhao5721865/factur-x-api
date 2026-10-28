@@ -308,4 +308,65 @@ class GenerateControllerTest {
             .andExpect(status().isOk())
             .andExpect(header().string("X-RateLimit-Remaining", "3"));
     }
+
+    @Test
+    void zeroVatRate_withDefaultCategoryS_returns400_brS05() throws Exception {
+        String json = """
+            {"invoiceNumber": "BRS05-1", "issueDate": "2026-10-08", "currency": "EUR",
+             "seller": {"name": "S", "countryCode": "FR", "vatId": "FR1"},
+             "buyer": {"name": "B", "countryCode": "FR"},
+             "lines": [{"description": "x", "quantity": 1, "unitPrice": 50, "vatRate": 0}]}
+            """;
+        mockMvc.perform(gen(json))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.error").value(
+                "lines[0].vatRate: BR-S-05 — category S requires vatRate > 0. For 0% use vatCategoryCode: \"Z\""));
+    }
+
+    @Test
+    void nonzeroVatRate_withCategoryZ_returns400_brZ05() throws Exception {
+        String json = """
+            {"invoiceNumber": "BRZ05-1", "issueDate": "2026-10-08", "currency": "EUR",
+             "seller": {"name": "S", "countryCode": "FR", "vatId": "FR1"},
+             "buyer": {"name": "B", "countryCode": "FR"},
+             "lines": [{"description": "x", "quantity": 1, "unitPrice": 50, "vatRate": 20,
+                        "vatCategoryCode": "Z"}]}
+            """;
+        mockMvc.perform(gen(json))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.error").value(
+                "lines[0].vatRate: BR-Z-05 — category Z requires vatRate = 0"));
+    }
+
+    @Test
+    void unsupportedCategory_returns400() throws Exception {
+        String json = """
+            {"invoiceNumber": "AE-1", "issueDate": "2026-10-08", "currency": "EUR",
+             "seller": {"name": "S", "countryCode": "FR", "vatId": "FR1"},
+             "buyer": {"name": "B", "countryCode": "FR"},
+             "lines": [{"description": "x", "quantity": 1, "unitPrice": 50, "vatRate": 0,
+                        "vatCategoryCode": "AE"}]}
+            """;
+        mockMvc.perform(gen(json))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.error").value(
+                "lines[0].vatCategoryCode: unsupported value 'AE'. Supported: S, Z (others require VATEX reason codes, not yet supported)"));
+    }
+
+    @Test
+    void secondLineViolation_reportsLineIndex() throws Exception {
+        String json = """
+            {"invoiceNumber": "IDX-1", "issueDate": "2026-10-08", "currency": "EUR",
+             "seller": {"name": "S", "countryCode": "FR", "vatId": "FR1"},
+             "buyer": {"name": "B", "countryCode": "FR"},
+             "lines": [
+               {"description": "a", "quantity": 1, "unitPrice": 100, "vatRate": 20},
+               {"description": "b", "quantity": 1, "unitPrice": 50, "vatRate": 0}
+             ]}
+            """;
+        mockMvc.perform(gen(json))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.error").value(
+                "lines[1].vatRate: BR-S-05 — category S requires vatRate > 0. For 0% use vatCategoryCode: \"Z\""));
+    }
 }
