@@ -75,6 +75,28 @@
               </resources>
             </configuration>
           </execution>
+          <!-- 快速上手 fixtures：samples/ 是单一事实源，构建时复制到可下载目录 -->
+          <execution>
+            <id>copy-quickstart-fixtures</id>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.outputDirectory}/static/downloads</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${maven.multiModuleProjectDirectory}/samples</directory>
+                  <includes>
+                    <include>factur-x-basic.pdf</include>
+                    <include>valid-en16931-cii-basic.xml</include>
+                    <include>invalid-missing-buyer.xml</include>
+                  </includes>
+                  <filtering>false</filtering>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
         </executions>
       </plugin>
       <plugin>

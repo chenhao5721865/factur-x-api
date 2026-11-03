@@ -30,6 +30,62 @@
       (XSD + Schematron EN 16931) avant d'être renvoyé.
     </p>
 
+    <!-- Démarrage rapide -->
+    <section class="mb-10" id="demarrage">
+      <h2 class="text-xl font-semibold mb-3">Démarrage en 15 minutes</h2>
+      <p class="text-sm text-slate-600 mb-4">
+        De zéro à une facture générée puis validée, sans SDK. Il faut une clé API et Postman
+        (ou <code class="bg-slate-200 rounded px-1">curl</code>).
+      </p>
+
+      <ol class="list-decimal list-inside space-y-3 text-sm text-slate-700 mb-6">
+        <li>
+          <strong>Obtenez une clé</strong> sur la page
+          <a href="/tarifs" class="text-blue-600 underline">Tarifs</a>.
+          Le plan gratuit inclut 5 générations par mois et la validation illimitée.
+        </li>
+        <li>
+          <strong>Téléchargez et importez</strong> la
+          <a href="/downloads/facturx-api.postman_collection.json" download class="text-blue-600 underline">collection Postman</a>
+          et son
+          <a href="/downloads/facturx-api.postman_environment.json" download class="text-blue-600 underline">environnement</a>.
+          Dans Postman : <em>Import</em> → sélectionnez les deux fichiers → choisissez
+          l'environnement « Factur-X API » → renseignez la variable
+          <code class="bg-slate-200 rounded px-1">apiKey</code>.
+        </li>
+        <li>
+          <strong>Lancez les requêtes dans l'ordre :</strong>
+          <ul class="list-disc list-inside mt-2 space-y-1 text-slate-600">
+            <li>1. Générer une facture (JSON → XML) — <code>200</code> et en-têtes de quota</li>
+            <li>2. Valider un PDF Factur-X fourni — <code>valid: true</code></li>
+            <li>3. Valider un XML non conforme fourni — <code>valid: false</code>, règle <code>BR-07</code></li>
+            <li>4. Valider le XML généré à l'étape 1 — <code>valid: true</code> (enregistrez d'abord la réponse : <em>Save Response → Save to a file</em>)</li>
+          </ul>
+        </li>
+      </ol>
+
+      <h3 class="font-medium mb-2">Sans Postman : la boucle en deux commandes</h3>
+      <pre class="bg-slate-900 text-slate-100 text-sm rounded-lg p-4 overflow-x-auto mb-4">curl -X POST https://factur-x-api.com/api/generate \
+  -H "X-API-Key: facturx_..." \
+  -H "Content-Type: application/json" \
+  -o facture.xml \
+  -d @facture.json
+
+curl -X POST https://factur-x-api.com/api/validate \
+  -H "X-API-Key: facturx_..." \
+  -F "file=@facture.xml"</pre>
+
+      <h3 class="font-medium mb-2">Fichiers d'exemple</h3>
+      <ul class="list-disc list-inside text-sm text-slate-600 space-y-1">
+        <li><a href="/downloads/factur-x-basic.pdf" download class="text-blue-600 underline">factur-x-basic.pdf</a> — PDF/A-3 avec XML embarqué (valide)</li>
+        <li><a href="/downloads/valid-en16931-cii-basic.xml" download class="text-blue-600 underline">valid-en16931-cii-basic.xml</a> — XML CII conforme</li>
+        <li><a href="/downloads/invalid-missing-buyer.xml" download class="text-blue-600 underline">invalid-missing-buyer.xml</a> — XML non conforme (BR-07)</li>
+      </ul>
+      <p class="text-xs text-slate-500 mt-2">
+        Exemples issus de mustangproject (Apache-2.0) et ConnectingEurope/eInvoicing-EN16931 (EUPL-1.2).
+      </p>
+    </section>
+
     <!-- Authentification -->
     <section class="mb-10">
       <h2 class="text-xl font-semibold mb-3">Authentification</h2>
@@ -191,11 +247,13 @@
       <h3 class="font-medium mb-2">Réponse</h3>
       <pre class="bg-slate-900 text-slate-100 text-sm rounded-lg p-4 overflow-x-auto mb-4">{
   "valid": false,
+  "profile": null,
   "errors": [
     {
-      "rule": "BR-07",
-      "message": "Le nom de l'acheteur doit être renseigné.",
-      "location": "..."
+      "ruleId": "BR-07",
+      "severity": "ERROR",
+      "xpath": "...",
+      "message": "Le nom de l'acheteur doit être renseigné."
     }
   ],
   "warnings": []

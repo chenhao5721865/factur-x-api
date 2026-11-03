@@ -1,0 +1,215 @@
+{
+  "info": {
+    "_postman_id": "f4c1a2b3-0000-4000-8000-000000000001",
+    "name": "Factur-X API — Démarrage en 15 minutes",
+    "description": "Quatre requêtes pour passer de zéro à une facture générée puis validée.\n\n1. Obtenez une clé gratuite sur https://factur-x-api.com/tarifs\n2. Importez cette collection et l'environnement, puis renseignez la variable apiKey\n3. Lancez les requêtes dans l'ordre\n\nDocumentation : https://factur-x-api.com/docs",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://factur-x-api.com"
+    },
+    {
+      "key": "apiKey",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Générer une facture (JSON → XML)",
+      "description": "Génère un XML CII conforme EN 16931. La réponse contient le XML et les en-têtes de quota.\n\nPour l'étape 4 : clic droit sur la réponse → Save Response → Save to a file, enregistrez sous invoice.xml.",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+              "pm.test(\"Réponse XML\", () => pm.expect(pm.response.headers.get(\"Content-Type\")).to.include(\"xml\"));",
+              "pm.test(\"En-têtes de quota présents\", () => {",
+              "  pm.expect(pm.response.headers.has(\"X-RateLimit-Limit\")).to.be.true;",
+              "  pm.expect(pm.response.headers.has(\"X-RateLimit-Remaining\")).to.be.true;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{apiKey}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"invoiceNumber\": \"F-2026-001\",\n  \"issueDate\": \"2026-11-03\",\n  \"currency\": \"EUR\",\n  \"seller\": {\n    \"name\": \"Ma Société SARL\",\n    \"countryCode\": \"FR\",\n    \"vatId\": \"FR12345678901\",\n    \"legalOrgId\": \"123456789\",\n    \"postcode\": \"75008\",\n    \"lineOne\": \"12 rue de la Paix\",\n    \"city\": \"Paris\"\n  },\n  \"buyer\": {\n    \"name\": \"Client SAS\",\n    \"countryCode\": \"FR\",\n    \"vatId\": \"FR98765432109\",\n    \"postcode\": \"69002\",\n    \"lineOne\": \"5 place Bellecour\",\n    \"city\": \"Lyon\"\n  },\n  \"lines\": [\n    {\n      \"description\": \"Prestation de conseil\",\n      \"quantity\": 2,\n      \"unitPrice\": 500.00,\n      \"vatRate\": 20,\n      \"unitCode\": \"C62\",\n      \"vatCategoryCode\": \"S\"\n    },\n    {\n      \"description\": \"Déplacement\",\n      \"quantity\": 1,\n      \"unitPrice\": 120.00,\n      \"vatRate\": 20\n    }\n  ],\n  \"payment\": {\n    \"iban\": \"FR7630006000011234567890189\",\n    \"paymentReference\": \"F-2026-001\",\n    \"dueDate\": \"2026-12-03\"\n  },\n  \"note\": \"Merci de votre confiance.\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/generate",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "generate"
+          ]
+        }
+      }
+    },
+    {
+      "name": "2. Valider une facture Factur-X (PDF fourni)",
+      "description": "Envoie factur-x-basic.pdf (PDF/A-3 avec XML embarqué). Résultat attendu : valid = true.\n\nSi Postman ne trouve pas le fichier, sélectionnez celui téléchargé depuis https://factur-x-api.com/docs",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+              "const body = pm.response.json();",
+              "pm.test(\"Facture valide\", () => pm.expect(body.valid).to.eql(true));",
+              "pm.test(\"Aucune erreur\", () => pm.expect(body.errors).to.be.an(\"array\").that.is.empty);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{apiKey}}"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": "factur-x-basic.pdf"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/validate",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "validate"
+          ]
+        }
+      }
+    },
+    {
+      "name": "3. Valider un XML non conforme (BR-07)",
+      "description": "Envoie invalid-missing-buyer.xml. Résultat attendu : valid = false, avec la règle BR-07 (nom de l'acheteur manquant).\n\nDétail de la règle : https://factur-x-api.com/regles/br-07",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+              "const body = pm.response.json();",
+              "pm.test(\"Facture non conforme\", () => pm.expect(body.valid).to.eql(false));",
+              "pm.test(\"Règle BR-07 signalée\", () => {",
+              "  pm.expect(body.errors.some(e => e.ruleId === \"BR-07\")).to.be.true;",
+              "});"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{apiKey}}"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": "invalid-missing-buyer.xml"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/validate",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "validate"
+          ]
+        }
+      }
+    },
+    {
+      "name": "4. Valider le XML généré à l'étape 1",
+      "description": "Enregistrez d'abord la réponse de l'étape 1 sous invoice.xml (clic droit → Save Response → Save to a file), puis sélectionnez ce fichier ici. Résultat attendu : valid = true.\n\nAlternative en ligne de commande : voir la section « Sans Postman » sur https://factur-x-api.com/docs",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test(\"200 OK\", () => pm.response.to.have.status(200));",
+              "const body = pm.response.json();",
+              "pm.test(\"XML généré valide\", () => pm.expect(body.valid).to.eql(true));",
+              "pm.test(\"Aucune erreur\", () => pm.expect(body.errors).to.be.an(\"array\").that.is.empty);"
+            ]
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "X-API-Key",
+            "value": "{{apiKey}}"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": "invoice.xml"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/validate",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "validate"
+          ]
+        }
+      }
+    }
+  ]
+}
