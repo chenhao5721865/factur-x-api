@@ -1,0 +1,22 @@
+{
+  "invoiceNumber": "FIX-S-VALID",
+  "issueDate": "2026-10-08",
+  "currency": "EUR",
+  "seller": {
+    "name": "Ma Société SARL",
+    "countryCode": "FR",
+    "vatId": "FR12345678901"
+  },
+  "buyer": {
+    "name": "Client SAS",
+    "countryCode": "FR"
+  },
+  "lines": [
+    {
+      "description": "Consulting services",
+      "quantity": 2,
+      "unitPrice": 500.0,
+      "vatRate": 20
+    }
+  ]
+}

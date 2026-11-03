@@ -1,0 +1,24 @@
+{
+  "invoiceNumber": "FIX-E-VALID",
+  "issueDate": "2026-10-08",
+  "currency": "EUR",
+  "seller": {
+    "name": "Ma Société SARL",
+    "countryCode": "FR",
+    "vatId": "FR12345678901"
+  },
+  "buyer": {
+    "name": "Client SAS",
+    "countryCode": "FR"
+  },
+  "lines": [
+    {
+      "description": "Exempt supply",
+      "quantity": 1,
+      "unitPrice": 100.0,
+      "vatRate": 0,
+      "vatCategoryCode": "E"
+    }
+  ],
+  "vatExemptionReason": "Exempt as art. 262 ter I of the French CGI"
+}

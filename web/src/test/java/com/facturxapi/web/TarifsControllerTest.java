@@ -23,7 +23,7 @@ class TarifsControllerTest {
             .andExpect(status().isOk())
             .andExpect(content().string(org.hamcrest.Matchers.containsString("lang=\"fr\"")))
             .andExpect(content().string(org.hamcrest.Matchers.containsString("Étape 1 — Obtenir votre clé API")))
-            .andExpect(content().string(org.hamcrest.Matchers.containsString("9 $")))
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("9 €")))
             // 无 checkout URL → Souscrire 按钮渲染为 disabled
             .andExpect(content().string(org.hamcrest.Matchers.containsString(
                 "id=\"subscribe-btn\" disabled")));

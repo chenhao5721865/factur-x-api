@@ -57,4 +57,24 @@ class XmlRuleValidatorTest {
         long xsdErrors = r.errors().stream().filter(i -> i.ruleId().equals("XSD")).count();
         assertThat(xsdErrors).as("应收集多条 XSD 错误而非只报第一条").isGreaterThanOrEqualTo(2);
     }
+
+    @Test
+    void paymentMeansWithoutRemittanceReference_emitsWarning_butStaysValid() throws Exception {
+        byte[] original = Files.readAllBytes(Path.of("../samples/valid-en16931-cii-basic.xml"));
+        String stripped = new String(original, java.nio.charset.StandardCharsets.UTF_8)
+            .replaceAll("(?m)^\\s*<ram:PaymentReference>.*</ram:PaymentReference>\\r?\\n", "");
+        assertThat(stripped).contains("SpecifiedTradeSettlementPaymentMeans"); // 前提：样例带付款信息
+        assertThat(stripped).doesNotContain("PaymentReference");
+
+        ValidationResult r = validator().validate(stripped.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        assertThat(r.valid()).isTrue(); // 建议级：不影响合规判定
+        assertThat(r.warnings()).anyMatch(i -> i.ruleId().equals("FX-W01"));
+    }
+
+    @Test
+    void paymentMeansWithRemittanceReference_noWarning() throws Exception {
+        byte[] xml = Files.readAllBytes(Path.of("../samples/valid-en16931-cii-basic.xml"));
+        ValidationResult r = validator().validate(xml); // 金样例自带 PaymentReference
+        assertThat(r.warnings()).noneMatch(i -> i.ruleId().equals("FX-W01"));
+    }
 }

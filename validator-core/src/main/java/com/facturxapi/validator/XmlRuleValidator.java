@@ -51,7 +51,9 @@ public final class XmlRuleValidator {
         if (!validateXsd(xml, issues)) {
             return ValidationResult.of(issues); // XSD 不过时 Schematron 结果无意义
         }
-        validateSchematron(xml, issues);
+        Document doc = parseSecurely(xml);
+        validateSchematron(doc, issues);
+        checkRemittanceReference(doc, issues);
         return ValidationResult.of(issues);
     }
 
@@ -101,15 +103,9 @@ public final class XmlRuleValidator {
         }
     }
 
-    private void validateSchematron(byte[] xml, List<Issue> issues) {
+    private void validateSchematron(Document doc, List<Issue> issues) {
         try {
             // applySchematronValidationToSVRL 入参须是 DOM 节点（spike 实测，7.1.3）
-            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-            dbf.setNamespaceAware(true);
-            // XXE 防护：安全处理 + 禁 DOCTYPE（外部实体随之失效），用户提交的 XML 走此路径
-            dbf.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
-            dbf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
-            Document doc = dbf.newDocumentBuilder().parse(new ByteArrayInputStream(xml));
             SchematronOutputType svrl = schematron.applySchematronValidationToSVRL(doc, null);
             for (SVRLFailedAssert fa : SVRLHelper.getAllFailedAssertions(svrl)) {
                 issues.add(new Issue(fa.getID(), Severity.ERROR, fa.getLocation(), fa.getText().trim()));
@@ -118,4 +114,39 @@ public final class XmlRuleValidator {
             throw new IllegalStateException("Schematron 校验执行失败", e);
         }
     }
+
+    /**
+     * 建议级检查（非 EN 16931 规则）：发票带付款信息（IBAN）但没有 PaymentReference (BT-83)
+     * 时，买方无法把付款与发票对应。不构成不合规（valid 不受影响），只提示。
+     */
+    private static void checkRemittanceReference(Document doc, List<Issue> issues) {
+        if (doc.getElementsByTagNameNS(RAM_NS, "SpecifiedTradeSettlementPaymentMeans")
+                .getLength() == 0) {
+            return; // 没有付款信息就无从谈起
+        }
+        if (doc.getElementsByTagNameNS(RAM_NS, "PaymentReference").getLength() > 0) {
+            return; // 已有汇款参考
+        }
+        issues.add(new Issue("FX-W01", Severity.WARNING,
+            "/rsm:CrossIndustryInvoice/rsm:SupplyChainTradeTransaction"
+                + "/ram:ApplicableHeaderTradeSettlement/ram:SpecifiedTradeSettlementPaymentMeans",
+            "Invoice carries payment details (IBAN) but no PaymentReference (BT-83): "
+                + "the buyer cannot match the payment back to this invoice."));
+    }
+
+    private static Document parseSecurely(byte[] xml) throws IllegalStateException {
+        try {
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            dbf.setNamespaceAware(true);
+            // XXE 防护：安全处理 + 禁 DOCTYPE（外部实体随之失效），用户提交的 XML 走此路径
+            dbf.setFeature(XMLConstants.FEATURE_SECURE_PROCESSING, true);
+            dbf.setFeature("http://apache.org/xml/features/disallow-doctype-decl", true);
+            return dbf.newDocumentBuilder().parse(new ByteArrayInputStream(xml));
+        } catch (Exception e) {
+            throw new IllegalStateException("XML 解析失败", e);
+        }
+    }
+
+    private static final String RAM_NS =
+        "urn:un:unece:uncefact:data:standard:ReusableAggregateBusinessInformationEntity:100";
 }

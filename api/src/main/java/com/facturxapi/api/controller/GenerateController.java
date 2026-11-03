@@ -8,7 +8,6 @@ import com.facturxapi.api.service.XmlInvoiceGenerator;
 import com.facturxapi.validator.FacturxValidator;
 import com.facturxapi.validator.ValidationResult;
 import jakarta.validation.Valid;
-import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.OffsetDateTime;
 import java.util.Map;
@@ -64,8 +63,8 @@ public class GenerateController {
                 .body(Map.of("error", "Invalid or missing API key"));
         }
 
-        // 一致性前置校验：在配额检查之前，客户端输入错误不扣额
-        validateVatConsistency(request);
+        // 类别一致性前置校验：在配额检查之前，客户端输入错误不扣额
+        generator.validateInput(request);
 
         // 配额检查：@Valid 失败在方法体前不扣额；过此处后的调用（含失败）都扣额
         QuotaService.Decision decision = quotaService.checkAndIncrement(key, "/generate");
@@ -113,33 +112,5 @@ public class GenerateController {
     private static String sanitizeFilename(String invoiceNumber) {
         String cleaned = invoiceNumber.replaceAll("[^A-Za-z0-9._-]", "_");
         return cleaned.isEmpty() ? "invoice" : cleaned;
-    }
-
-    /**
-     * vatRate 与 vatCategoryCode 一致性校验（BR-S-05 / BR-Z-05），命中即抛 400。
-     * category 仅支持 S/Z——其余类别需 VATEX 原因码（BT-120/121），生成器不支持，
-     * 放行必然自校验 500，故前置拒绝。只报第一处违规。
-     */
-    private static void validateVatConsistency(InvoiceRequest request) {
-        var lines = request.lines();
-        for (int i = 0; i < lines.size(); i++) {
-            var line = lines.get(i);
-            String cat = line.vatCategoryCode(); // 已经紧凑构造器归一化
-            boolean zeroRate = line.vatRate().compareTo(BigDecimal.ZERO) == 0;
-            if (!"S".equals(cat) && !"Z".equals(cat)) {
-                throw new IllegalArgumentException(
-                    "lines[" + i + "].vatCategoryCode: unsupported value '" + cat
-                    + "'. Supported: S, Z (others require VATEX reason codes, not yet supported)");
-            }
-            if ("S".equals(cat) && zeroRate) {
-                throw new IllegalArgumentException(
-                    "lines[" + i + "].vatRate: BR-S-05 — category S requires vatRate > 0. "
-                    + "For 0% use vatCategoryCode: \"Z\"");
-            }
-            if ("Z".equals(cat) && !zeroRate) {
-                throw new IllegalArgumentException(
-                    "lines[" + i + "].vatRate: BR-Z-05 — category Z requires vatRate = 0");
-            }
-        }
     }
 }

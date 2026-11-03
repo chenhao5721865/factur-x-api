@@ -22,7 +22,7 @@ class DocsControllerTest {
         mockMvc.perform(get("/docs"))
             .andExpect(status().isOk())
             .andExpect(content().string(org.hamcrest.Matchers.containsString("lang=\"fr\"")))
-            .andExpect(content().string(org.hamcrest.Matchers.containsString("Documentation API")))
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("Générez des factures Factur-X valides")))
             .andExpect(content().string(org.hamcrest.Matchers.containsString("POST /api/generate")))
             .andExpect(content().string(org.hamcrest.Matchers.containsString("POST /api/validate")))
             .andExpect(content().string(org.hamcrest.Matchers.containsString("X-API-Key")));
