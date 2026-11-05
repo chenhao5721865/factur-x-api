@@ -35,3 +35,11 @@ app:
   lemonsqueezy:
     # 空则 webhook 端点 503 fail closed（订阅永不生效——上线检查项！）
     webhook-secret: ${LS_WEBHOOK_SECRET:}
+  creem:
+    api-base: ${CREEM_API_BASE:https://api.creem.io/v1}
+    # api-key / product-id 均非空才允许创建 checkout，否则 503
+    api-key: ${CREEM_API_KEY:}
+    product-id: ${CREEM_PRODUCT_ID:}
+    success-url: ${CREEM_SUCCESS_URL:https://factur-x-api.com/tarifs?merci=1}
+    # 空则 webhook 端点 503 fail closed
+    webhook-secret: ${CREEM_WEBHOOK_SECRET:}

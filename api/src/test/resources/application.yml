@@ -15,3 +15,9 @@ spring:
 app:
   lemonsqueezy:
     webhook-secret: test-webhook-secret
+  creem:
+    webhook-secret: test-creem-secret
+    # checkout 默认未配置（503）；需要成功的用例用 @SpringBootTest properties 覆盖
+    api-base: http://localhost:9/v1
+    api-key:
+    product-id:

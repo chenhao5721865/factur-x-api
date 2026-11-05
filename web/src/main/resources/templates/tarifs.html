@@ -57,7 +57,7 @@
           <li>500 factures générées / mois</li>
           <li>Validation illimitée</li>
           <li>Facturation mensuelle, résiliable à tout moment</li>
-          <li>Paiement sécurisé via LemonSqueezy</li>
+          <li>Paiement sécurisé via Creem</li>
         </ul>
       </div>
     </section>
@@ -107,14 +107,21 @@
 
   <footer class="bg-white border-t border-slate-200">
     <div class="max-w-3xl mx-auto px-4 py-6 text-sm text-slate-500">
-      © 2026 Factur-X API — Conformité EN 16931 / Factur-X.
-      Paiements traités par <a href="https://www.lemonsqueezy.com" class="underline">LemonSqueezy</a>.
+      <p class="mb-2">
+        © 2026 Factur-X API — Conformité EN 16931 / Factur-X.
+        Paiements traités par <a href="https://www.creem.io" class="underline">Creem</a>.
+      </p>
+      <p class="flex flex-wrap gap-x-4 gap-y-1">
+        <a href="/mentions-legales" class="underline hover:text-slate-700">Mentions légales</a>
+        <a href="/confidentialite" class="underline hover:text-slate-700">Confidentialité</a>
+        <a href="/cgv" class="underline hover:text-slate-700">CGV</a>
+        <a href="mailto:543843499@qq.com" class="underline hover:text-slate-700">543843499@qq.com</a>
+      </p>
     </div>
   </footer>
 
   <script th:inline="javascript">
-    const CHECKOUT_URL = /*[[${checkoutUrl}]]*/ '';
-    const LS_KEY_STORAGE = 'facturx_api_key';
+    const API_KEY_STORAGE = 'facturx_api_key';
 
     const keyForm = document.getElementById('key-form');
     const keyEmail = document.getElementById('key-email');
@@ -134,7 +141,7 @@
     }
 
     // Déjà une clé en local : propose directement la souscription
-    const stored = localStorage.getItem(LS_KEY_STORAGE);
+    const stored = localStorage.getItem(API_KEY_STORAGE);
     if (stored) {
       keyValue.textContent = stored;
       keyRevealed.classList.remove('hidden');
@@ -143,19 +150,34 @@
     }
 
     function enableSubscribe(key) {
-      if (!CHECKOUT_URL) {
-        subscribeNote.textContent = 'Souscription bientôt disponible.';
-        return;
-      }
       subscribeBtn.disabled = false;
-      subscribeBtn.addEventListener('click', () => {
-        const email = encodeURIComponent(localStorage.getItem('facturx_api_email') || '');
-        const url = CHECKOUT_URL
-          + (CHECKOUT_URL.includes('?') ? '&' : '?')
-          + 'checkout[custom][api_key]=' + encodeURIComponent(key)
-          + '&checkout[email]=' + email;
-        window.location.href = url;
-      });
+      subscribeBtn.onclick = async () => {
+        subscribeBtn.disabled = true;
+        subscribeNote.textContent = 'Redirection vers le paiement…';
+        try {
+          const resp = await fetch('/api/checkout', {
+            method: 'POST',
+            headers: {'X-API-Key': key}
+          });
+          const data = await resp.json().catch(() => ({}));
+          if (resp.ok && data.checkout_url) {
+            window.location.href = data.checkout_url;
+            return;
+          }
+          if (resp.status === 401) {
+            subscribeNote.textContent = 'Clé API invalide. Obtenez une nouvelle clé à l’étape 1.';
+          } else if (resp.status === 503) {
+            subscribeNote.textContent = 'Souscription bientôt disponible.';
+          } else if (resp.status === 502) {
+            subscribeNote.textContent = 'Le paiement est temporairement indisponible. Réessayez dans quelques minutes.';
+          } else {
+            subscribeNote.textContent = 'Une erreur est survenue. Réessayez.';
+          }
+        } catch (err) {
+          subscribeNote.textContent = 'Erreur réseau. Réessayez.';
+        }
+        subscribeBtn.disabled = false;
+      };
     }
 
     keyForm.addEventListener('submit', async (e) => {
@@ -174,8 +196,7 @@
         });
         const data = await resp.json().catch(() => ({}));
         if (resp.status === 201 && data.apiKey) {
-          localStorage.setItem(LS_KEY_STORAGE, data.apiKey);
-          localStorage.setItem('facturx_api_email', email);
+          localStorage.setItem(API_KEY_STORAGE, data.apiKey);
           keyValue.textContent = data.apiKey;
           keyRevealed.classList.remove('hidden');
           setOk('Clé créée ! Conservez-la : elle ne sera plus affichée.');

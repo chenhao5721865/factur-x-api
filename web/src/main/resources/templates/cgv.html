@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <title>Conditions générales de vente | Factur-X API</title>
+  <meta name="description" content="Conditions générales de vente de Factur-X API : offres, tarifs, renouvellement, résiliation et responsabilité.">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+  <header class="bg-white border-b border-slate-200">
+    <div class="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
+      <span class="font-bold text-lg">Factur-X API</span>
+      <nav class="text-sm space-x-4">
+        <a href="/validateur-factur-x" class="text-slate-500 hover:text-slate-800">Validateur gratuit</a>
+        <a href="/tarifs" class="text-slate-500 hover:text-slate-800">Tarifs</a>
+        <a href="/regles" class="text-slate-500 hover:text-slate-800">Règles</a>
+        <a href="/docs" class="text-slate-500 hover:text-slate-800">Docs</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-3xl mx-auto px-4 py-10 flex-1 w-full">
+    <h1 class="text-3xl font-bold mb-2">Conditions générales de vente</h1>
+    <p class="text-sm text-slate-400 mb-8">Dernière mise à jour : 4 novembre 2026</p>
+
+    <section class="space-y-4 text-slate-700 leading-relaxed">
+      <h2 class="text-xl font-semibold text-slate-800">Article 1 — Objet</h2>
+      <p>
+        Les présentes conditions générales de vente (CGV) régissent l'accès et l'utilisation du
+        service Factur-X API, accessible à l'adresse
+        <a href="/" class="text-blue-600 underline">factur-x-api.com</a>.
+        Toute souscription à une offre payante implique l'acceptation sans réserve des présentes CGV.
+      </p>
+
+      <h2 class="text-xl font-semibold text-slate-800 pt-4">Article 2 — Description du service</h2>
+      <p>Factur-X API est un service en ligne permettant :</p>
+      <ul class="list-disc list-inside space-y-1">
+        <li>
+          de valider une facture électronique (PDF Factur-X ou XML CII) au regard des règles
+          métier EN 16931 et des contrôles Factur-X ;
+        </li>
+        <li>
+          de générer un fichier XML CII conforme EN 16931 à partir de données fournies en JSON,
+          avec auto-validation du document produit.
+        </li>
+      </ul>
+      <p>
+        Le service est un outil technique de validation et de génération. Il ne constitue ni un
+        conseil juridique ou fiscal, ni une plateforme de dématérialisation partenaires (PDP)
+        agréée, ni un service de transmission de factures. L'éditeur ne garantit pas l'acceptation
+        de vos factures par vos clients, par une plateforme tierce ou par l'administration fiscale.
+      </p>
+
+      <h2 class="text-xl font-semibold text-slate-800 pt-4">Article 3 — Offres et tarifs</h2>
+      <ul class="list-disc list-inside space-y-2">
+        <li>
+          <strong>Offre gratuite</strong> : 5 générations de factures par mois et validation
+          illimitée, sans carte bancaire.
+        </li>
+        <li>
+          <strong>Offre Pro</strong> : 9 € par mois, comprenant 500 générations de factures par
+          mois et la validation illimitée.
+        </li>
+      </ul>
+      <p>
+        Les quotas sont décomptés par mois calendaire. Les prix sont indiqués en euros. La TVA
+        applicable est calculée et collectée par le vendeur officiel (merchant of record) selon le
+        pays du client.
+      </p>
+
+      <h2 class="text-xl font-semibold text-slate-800 pt-4">Article 4 — Commande et paiement</h2>
+      <p>
+        La souscription s'effectue depuis la page
+        <a href="/tarifs" class="text-blue-600 underline">Tarifs</a>. Le paiement est traité par
+        notre prestataire de paiement agréé, qui agit comme vendeur officiel (merchant of record) :
+        il encaisse le paiement, émet les reçus et gère la TVA. Aucune donnée de carte bancaire
+        n'est transmise à l'éditeur ni stockée par lui.
+      </p>
+      <p>
+        L'accès au plan Pro est activé automatiquement après confirmation du paiement.
+      </p>
+
+      <h2 class="text-xl font-semibold text-slate-800 pt-4">Article 5 — Durée, renouvellement et résiliation</h2>
+      <p>
+        L'abonnement Pro est mensuel et se renouvelle automatiquement à chaque échéance, sauf
+        résiliation. Vous pouvez résilier à tout moment depuis le lien de gestion figurant sur vos
+        reçus ou en écrivant à
+        <a href="mailto:543843499@qq.com" class="text-blue-600 underline">543843499@qq.com</a>.
+        La résiliation prend effet à la fin de la période en cours ; l'accès Pro reste actif
+        jusqu'à cette date. Les sommes déjà versées ne sont pas remboursées au prorata, sauf
+        disposition légale impérative ou erreur de facturation.
+      </p>
+
+      <h2 class="text-xl font-semibold text-slate-800 pt-4">Article 6 — Droit de rétractation</h2>
+      <p>
+        Lorsque le client est un consommateur au sens du droit de l'Union européenne, il dispose en
+        principe d'un délai de 14 jours pour exercer son droit de rétractation. En souscrivant et en
+        accédant immédiatement au service, le consommateur demande son exécution immédiate et
+        reconnaît que ce droit ne s'applique plus une fois le service pleinement exécuté.
+      </p>
+
+      <h2 class="text-xl font-semibold text-slate-800 pt-4">Article 7 — Quotas et usage acceptable</h2>
+      <p>
+        Les quotas mensuels sont indiqués à l'article 3. Au-delà du quota, les appels de génération
+        sont refusés jusqu'au mois suivant. Il est interdit de contourner les quotas, de revendre
+        l'accès au service sans autorisation écrite, de perturber son fonctionnement ou de
+        l'utiliser à des fins illicites.
+      </p>
+
+      <h2 class="text-xl font-semibold text-slate-800 pt-4">Article 8 — Disponibilité et maintenance</h2>
+      <p>
+        Le service est fourni selon une obligation de moyens. L'éditeur s'efforce d'assurer une
+        disponibilité continue mais ne garantit pas une disponibilité sans interruption. Des
+        interruptions peuvent survenir pour maintenance, mise à jour ou en cas d'incident technique.
+      </p>
+
+      <h2 class="text-xl font-semibold text-slate-800 pt-4">Article 9 — Garanties et responsabilité</h2>
+      <p>
+        Le service est fourni « en l'état ». L'éditeur ne garantit pas que les résultats de
+        validation ou les documents générés seront acceptés par un destinataire, une plateforme de
+        dématérialisation ou une administration. Il appartient au client de vérifier la conformité
+        de ses factures avant leur transmission.
+      </p>
+      <p>
+        Dans les limites permises par la loi, la responsabilité de l'éditeur est limitée aux
+        dommages directs et plafonnée au montant total payé par le client au cours des douze mois
+        précédant le fait générateur. Cette limitation ne s'applique pas en cas de faute lourde,
+        de dol ou d'atteinte à l'intégrité physique des personnes.
+      </p>
+
+      <h2 class="text-xl font-semibold text-slate-800 pt-4">Article 10 — Données personnelles</h2>
+      <p>
+        Le traitement des données personnelles est décrit dans la
+        <a href="/confidentialite" class="text-blue-600 underline">politique de confidentialité</a>.
+      </p>
+
+      <h2 class="text-xl font-semibold text-slate-800 pt-4">Article 11 — Modification des CGV</h2>
+      <p>
+        L'éditeur peut modifier les présentes CGV pour tenir compte de l'évolution du service ou de
+        la réglementation. Les modifications s'appliquent à compter de leur publication. Les clients
+        disposent de la faculté de résilier leur abonnement s'ils refusent les nouvelles conditions.
+      </p>
+
+      <h2 class="text-xl font-semibold text-slate-800 pt-4">Article 12 — Droit applicable et litiges</h2>
+      <p>
+        Les présentes CGV sont soumises au droit français, sous réserve des dispositions impératives
+        protectrices applicables aux consommateurs. En cas de litige, une solution amiable sera
+        recherchée en priorité ; à défaut, les juridictions compétentes seront celles prévues par
+        la loi applicable.
+      </p>
+
+      <h2 class="text-xl font-semibold text-slate-800 pt-4">Contact</h2>
+      <p>
+        Pour toute question relative à ces CGV :
+        <a href="mailto:543843499@qq.com" class="text-blue-600 underline">543843499@qq.com</a>.
+      </p>
+    </section>
+  </main>
+
+  <footer class="bg-white border-t border-slate-200">
+    <div class="max-w-3xl mx-auto px-4 py-6 text-sm text-slate-500">
+      <p class="mb-2">Factur-X API — validation et génération EN 16931 / Factur-X.</p>
+      <p class="flex flex-wrap gap-x-4 gap-y-1">
+        <a href="/mentions-legales" class="underline hover:text-slate-700">Mentions légales</a>
+        <a href="/confidentialite" class="underline hover:text-slate-700">Confidentialité</a>
+        <a href="/cgv" class="underline hover:text-slate-700">CGV</a>
+        <a href="mailto:543843499@qq.com" class="underline hover:text-slate-700">543843499@qq.com</a>
+      </p>
+    </div>
+  </footer>
+</body>
+</html>

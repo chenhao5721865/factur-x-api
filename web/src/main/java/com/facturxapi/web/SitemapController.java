@@ -21,6 +21,9 @@ public class SitemapController {
         url(sb, "/regles", "0.8");
         url(sb, "/docs", "0.8");
         url(sb, "/", "0.5");
+        url(sb, "/mentions-legales", "0.3");
+        url(sb, "/confidentialite", "0.3");
+        url(sb, "/cgv", "0.3");
         for (RulePageContent c : RulePages.all()) {
             url(sb, "/regles/" + RulePages.slugOf(c.ruleId()), "0.7");
         }

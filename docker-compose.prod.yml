@@ -18,7 +18,6 @@ services:
       DB_NAME: facturx
       DB_USER: facturx
       DB_PASSWORD: ${POSTGRES_PASSWORD}
-      LS_CHECKOUT_URL: ${LS_CHECKOUT_URL:-}
     depends_on:
       db:
         condition: service_healthy
@@ -41,6 +40,11 @@ services:
       DB_USER: facturx
       DB_PASSWORD: ${POSTGRES_PASSWORD}
       LS_WEBHOOK_SECRET: ${LS_WEBHOOK_SECRET:-}
+      CREEM_API_KEY: ${CREEM_API_KEY:-}
+      CREEM_PRODUCT_ID: ${CREEM_PRODUCT_ID:-}
+      CREEM_SUCCESS_URL: ${CREEM_SUCCESS_URL:-https://factur-x-api.com/tarifs?merci=1}
+      CREEM_WEBHOOK_SECRET: ${CREEM_WEBHOOK_SECRET:-}
+      CREEM_API_BASE: ${CREEM_API_BASE:-https://api.creem.io/v1}
     depends_on:
       db:
         condition: service_healthy

@@ -37,6 +37,9 @@ public class ApiKey {
     @Column(name = "ls_subscription_id", length = 64)
     private String lsSubscriptionId;
 
+    @Column(name = "creem_subscription_id", length = 64)
+    private String creemSubscriptionId;
+
     public ApiKey() {}
 
     public ApiKey(String email, String token) {
@@ -49,6 +52,12 @@ public class ApiKey {
     /** 全参构造器：测试注入历史时间戳用 */
     public ApiKey(String email, String token, OffsetDateTime createdAt, OffsetDateTime revokedAt,
                   String plan, OffsetDateTime planExpiresAt, String lsSubscriptionId) {
+        this(email, token, createdAt, revokedAt, plan, planExpiresAt, lsSubscriptionId, null);
+    }
+
+    public ApiKey(String email, String token, OffsetDateTime createdAt, OffsetDateTime revokedAt,
+                  String plan, OffsetDateTime planExpiresAt, String lsSubscriptionId,
+                  String creemSubscriptionId) {
         this.email = email;
         this.token = token;
         this.createdAt = createdAt;
@@ -56,6 +65,7 @@ public class ApiKey {
         this.plan = plan;
         this.planExpiresAt = planExpiresAt;
         this.lsSubscriptionId = lsSubscriptionId;
+        this.creemSubscriptionId = creemSubscriptionId;
     }
 
     public boolean isRevoked() {
@@ -96,4 +106,9 @@ public class ApiKey {
 
     public String getLsSubscriptionId() { return lsSubscriptionId; }
     public void setLsSubscriptionId(String lsSubscriptionId) { this.lsSubscriptionId = lsSubscriptionId; }
+
+    public String getCreemSubscriptionId() { return creemSubscriptionId; }
+    public void setCreemSubscriptionId(String creemSubscriptionId) {
+        this.creemSubscriptionId = creemSubscriptionId;
+    }
 }

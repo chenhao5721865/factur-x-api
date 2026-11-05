@@ -24,9 +24,15 @@ class TarifsControllerTest {
             .andExpect(content().string(org.hamcrest.Matchers.containsString("lang=\"fr\"")))
             .andExpect(content().string(org.hamcrest.Matchers.containsString("Étape 1 — Obtenir votre clé API")))
             .andExpect(content().string(org.hamcrest.Matchers.containsString("9 €")))
-            // 无 checkout URL → Souscrire 按钮渲染为 disabled
+            // checkout 走服务端 POST /api/checkout；Souscrire 在拿到 key 前保持 disabled
             .andExpect(content().string(org.hamcrest.Matchers.containsString(
-                "id=\"subscribe-btn\" disabled")));
+                "id=\"subscribe-btn\" disabled")))
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("fetch('/api/checkout'")))
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("https://www.creem.io")))
+            .andExpect(content().string(org.hamcrest.Matchers.not(
+                org.hamcrest.Matchers.containsString("LemonSqueezy"))))
+            .andExpect(content().string(org.hamcrest.Matchers.not(
+                org.hamcrest.Matchers.containsString("CHECKOUT_URL"))));
     }
 
     @Test

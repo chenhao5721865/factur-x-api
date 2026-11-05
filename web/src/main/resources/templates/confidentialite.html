@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="fr" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/favicon.ico" sizes="any">
+  <title>Politique de confidentialité | Factur-X API</title>
+  <meta name="description" content="Politique de confidentialité de Factur-X API : données traitées, finalités, durées de conservation et droits RGPD.">
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
+  <header class="bg-white border-b border-slate-200">
+    <div class="max-w-3xl mx-auto px-4 py-4 flex items-center justify-between">
+      <span class="font-bold text-lg">Factur-X API</span>
+      <nav class="text-sm space-x-4">
+        <a href="/validateur-factur-x" class="text-slate-500 hover:text-slate-800">Validateur gratuit</a>
+        <a href="/tarifs" class="text-slate-500 hover:text-slate-800">Tarifs</a>
+        <a href="/regles" class="text-slate-500 hover:text-slate-800">Règles</a>
+        <a href="/docs" class="text-slate-500 hover:text-slate-800">Docs</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="max-w-3xl mx-auto px-4 py-10 flex-1 w-full">
+    <h1 class="text-3xl font-bold mb-2">Politique de confidentialité</h1>
+    <p class="text-sm text-slate-400 mb-8">Dernière mise à jour : 4 novembre 2026</p>
+
+    <section class="space-y-4 text-slate-700 leading-relaxed">
+      <h2 class="text-xl font-semibold text-slate-800">Responsable du traitement</h2>
+      <p>
+        Le responsable du traitement est l'éditeur de Factur-X API.
+        Pour toute question ou demande relative à vos données :
+        <a href="mailto:543843499@qq.com" class="text-blue-600 underline">543843499@qq.com</a>.
+      </p>
+
+      <h2 class="text-xl font-semibold text-slate-800 pt-4">Données que nous traitons</h2>
+      <ul class="list-disc list-inside space-y-2">
+        <li>
+          <strong>Adresse e-mail</strong> : fournie lors de la création d'une clé API ou de
+          l'inscription à la liste d'information.
+        </li>
+        <li>
+          <strong>Clé API</strong> : jeton aléatoire associé à votre adresse e-mail, utilisé pour
+          authentifier vos appels.
+        </li>
+        <li>
+          <strong>Métadonnées d'utilisation</strong> : point d'accès appelé, horodatage et
+          consommation du mois en cours, pour appliquer les quotas.
+        </li>
+        <li>
+          <strong>Journaux techniques</strong> : adresse IP, date et heure, URL demandée, agent
+          utilisateur et code de réponse, générés par le serveur web et conservés à des fins de
+          sécurité et de diagnostic.
+        </li>
+        <li>
+          <strong>Contenu des factures</strong> : le fichier transmis au validateur ou les données
+          JSON envoyées au générateur sont traités en mémoire pour produire la réponse. Ils ne sont
+          pas enregistrés en base de données.
+        </li>
+        <li>
+          <strong>Données de paiement</strong> : les paiements sont traités par notre prestataire
+          agréé agissant comme vendeur officiel (merchant of record). Nous ne recevons ni ne
+          stockons aucun numéro de carte bancaire ; nous recevons l'état de l'abonnement et
+          l'adresse e-mail associée.
+        </li>
+      </ul>
+
+      <h2 class="text-xl font-semibold text-slate-800 pt-4">Finalités et bases légales</h2>
+      <ul class="list-disc list-inside space-y-2">
+        <li>Fournir le service et gérer votre clé API — exécution du contrat.</li>
+        <li>Appliquer les quotas, prévenir les abus et sécuriser le service — intérêt légitime.</li>
+        <li>Vous informer des évolutions du service — consentement (liste d'information).</li>
+        <li>Respecter nos obligations légales et comptables — obligation légale.</li>
+      </ul>
+
+      <h2 class="text-xl font-semibold text-slate-800 pt-4">Durées de conservation</h2>
+      <ul class="list-disc list-inside space-y-2">
+        <li>
+          Données de compte (e-mail, clé) : pendant la durée d'utilisation du service, puis jusqu'à
+          12 mois après la dernière utilisation.
+        </li>
+        <li>Métadonnées d'utilisation : conservées pour le calcul des quotas et le diagnostic.</li>
+        <li>Journaux techniques : durée limitée au nécessaire pour la sécurité et le diagnostic.</li>
+        <li>Contenu des factures : non conservé après le traitement de la requête.</li>
+      </ul>
+
+      <h2 class="text-xl font-semibold text-slate-800 pt-4">Destinataires</h2>
+      <p>
+        Vos données sont accessibles à l'éditeur du service et aux sous-traitants suivants :
+        l'hébergeur (Hetzner, Allemagne) et le prestataire de paiement (merchant of record).
+        Elles peuvent également être communiquées aux autorités lorsque la loi l'exige.
+      </p>
+      <p>
+        Certains prestataires de paiement peuvent être établis hors de l'Union européenne. Dans ce
+        cas, les transferts sont encadrés par les garanties appropriées prévues par le RGPD.
+      </p>
+
+      <h2 class="text-xl font-semibold text-slate-800 pt-4">Cookies et stockage local</h2>
+      <p>
+        Le site n'utilise pas de cookies publicitaires ni d'outils de mesure d'audience. Votre clé
+        API et votre adresse e-mail peuvent être enregistrées dans le stockage local de votre
+        navigateur pour vous éviter de les saisir à nouveau ; vous pouvez les supprimer à tout
+        moment depuis votre navigateur.
+      </p>
+      <p>
+        Certaines pages chargent des bibliothèques depuis des réseaux de diffusion publics
+        (Tailwind CSS, htmx). Ces requêtes peuvent transmettre votre adresse IP à ces prestataires.
+      </p>
+
+      <h2 class="text-xl font-semibold text-slate-800 pt-4">Sécurité</h2>
+      <p>
+        Les échanges avec le site et l'API sont chiffrés (HTTPS). L'accès aux données est limité
+        aux personnes qui en ont besoin pour exploiter le service. Les factures transmises ne sont
+        pas conservées.
+      </p>
+
+      <h2 class="text-xl font-semibold text-slate-800 pt-4">Vos droits</h2>
+      <p>
+        Conformément au RGPD, vous disposez d'un droit d'accès, de rectification, d'effacement, de
+        limitation, d'opposition et de portabilité de vos données. Pour l'exercer, écrivez à
+        <a href="mailto:543843499@qq.com" class="text-blue-600 underline">543843499@qq.com</a>.
+      </p>
+      <p>
+        Vous pouvez également introduire une réclamation auprès de la CNIL
+        (<a href="https://www.cnil.fr" class="text-blue-600 underline" rel="noopener">www.cnil.fr</a>,
+        3 place de Fontenoy, 75007 Paris, France).
+      </p>
+
+      <h2 class="text-xl font-semibold text-slate-800 pt-4">Modifications</h2>
+      <p>
+        Cette politique peut être mise à jour pour refléter l'évolution du service ou de la
+        réglementation. La date de dernière mise à jour figure en haut de cette page.
+      </p>
+    </section>
+  </main>
+
+  <footer class="bg-white border-t border-slate-200">
+    <div class="max-w-3xl mx-auto px-4 py-6 text-sm text-slate-500">
+      <p class="mb-2">Factur-X API — validation et génération EN 16931 / Factur-X.</p>
+      <p class="flex flex-wrap gap-x-4 gap-y-1">
+        <a href="/mentions-legales" class="underline hover:text-slate-700">Mentions légales</a>
+        <a href="/confidentialite" class="underline hover:text-slate-700">Confidentialité</a>
+        <a href="/cgv" class="underline hover:text-slate-700">CGV</a>
+        <a href="mailto:543843499@qq.com" class="underline hover:text-slate-700">543843499@qq.com</a>
+      </p>
+    </div>
+  </footer>
+</body>
+</html>

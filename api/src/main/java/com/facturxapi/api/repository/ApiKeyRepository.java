@@ -8,4 +8,5 @@ public interface ApiKeyRepository extends JpaRepository<ApiKey, Long> {
     Optional<ApiKey> findByToken(String token);
     Optional<ApiKey> findByEmail(String email);
     Optional<ApiKey> findByEmailAndRevokedAtIsNull(String email);
+    Optional<ApiKey> findByCreemSubscriptionId(String creemSubscriptionId);
 }
