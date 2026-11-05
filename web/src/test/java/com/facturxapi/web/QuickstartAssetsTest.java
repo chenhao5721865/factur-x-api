@@ -36,7 +36,33 @@ class QuickstartAssetsTest {
             .andExpect(content().string(containsString("/downloads/facturx-api.postman_environment.json")))
             .andExpect(content().string(containsString("/downloads/factur-x-basic.pdf")))
             .andExpect(content().string(containsString("/downloads/valid-en16931-cii-basic.xml")))
-            .andExpect(content().string(containsString("/downloads/invalid-missing-buyer.xml")));
+            .andExpect(content().string(containsString("/downloads/invalid-missing-buyer.xml")))
+            .andExpect(content().string(containsString("Exemples par catégorie de TVA")))
+            .andExpect(content().string(containsString("/downloads/api-fixtures/S-valid.json")))
+            .andExpect(content().string(containsString("/downloads/api-fixtures/G-invalid.json")));
+    }
+
+    @Test
+    void categoryFixtures_areServedForAllSixCategories() throws Exception {
+        for (String category : new String[] {"S", "Z", "E", "AE", "K", "G"}) {
+            for (String kind : new String[] {"valid", "invalid"}) {
+                String file = category + "-" + kind + ".json";
+                MvcResult result = mockMvc.perform(get("/downloads/api-fixtures/" + file))
+                    .andExpect(status().isOk())
+                    .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
+                    .andReturn();
+                JsonNode root = objectMapper.readTree(result.getResponse().getContentAsByteArray());
+                assertThat(root.path("invoiceNumber").asText())
+                    .isEqualTo("FIX-" + category + "-" + kind.toUpperCase());
+                JsonNode code = root.path("lines").get(0).path("vatCategoryCode");
+                if ("S".equals(category)) {
+                    // S est la catégorie par défaut : les fixtures S omettent volontairement le champ
+                    assertThat(code.isMissingNode()).isTrue();
+                } else {
+                    assertThat(code.asText()).isEqualTo(category);
+                }
+            }
+        }
     }
 
     @Test

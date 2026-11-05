@@ -97,6 +97,26 @@
               </resources>
             </configuration>
           </execution>
+          <!-- 六类 VAT 样例：samples/ 是单一事实源，构建时复制到下载目录 -->
+          <execution>
+            <id>copy-category-fixtures</id>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>${project.build.outputDirectory}/static/downloads/api-fixtures</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${maven.multiModuleProjectDirectory}/samples/api-fixtures</directory>
+                  <includes>
+                    <include>*.json</include>
+                  </includes>
+                  <filtering>false</filtering>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
         </executions>
       </plugin>
       <plugin>
