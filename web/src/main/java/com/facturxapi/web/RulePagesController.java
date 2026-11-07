@@ -1,6 +1,8 @@
 package com.facturxapi.web;
 
+import java.net.URI;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,5 +27,24 @@ public class RulePagesController {
         }
         model.addAttribute("c", c);
         return "regle";
+    }
+
+    /** 旧英文路径 /rules 仍有外链，301 到法语页，别让访客吃 404。 */
+    @GetMapping({"/rules", "/rules/"})
+    public ResponseEntity<Void> legacyIndex() {
+        return redirect("/regles");
+    }
+
+    @GetMapping("/rules/{code}")
+    public ResponseEntity<Void> legacyRule(@PathVariable String code) {
+        return redirect(RulePages.containsRule(code)
+            ? "/regles/" + RulePages.slugOf(code)
+            : "/regles");
+    }
+
+    private static ResponseEntity<Void> redirect(String path) {
+        return ResponseEntity.status(HttpStatus.MOVED_PERMANENTLY)
+            .location(URI.create(path))
+            .build();
     }
 }
