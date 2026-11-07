@@ -55,6 +55,7 @@ public class ResendMailClient {
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("from", from);
         payload.put("to", List.of(email));
+        payload.put("reply_to", "543843499@qq.com");
         payload.put("subject", "Votre clé API Factur-X");
         payload.put("text", welcomeText(apiKeyValue));
 

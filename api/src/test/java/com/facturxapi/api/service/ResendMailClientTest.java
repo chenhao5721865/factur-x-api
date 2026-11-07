@@ -33,6 +33,7 @@ class ResendMailClientTest {
             .andExpect(content().contentTypeCompatibleWith(MediaType.APPLICATION_JSON))
             .andExpect(jsonPath("$.from").value(FROM))
             .andExpect(jsonPath("$.to[0]").value("buyer@example.com"))
+            .andExpect(jsonPath("$.reply_to").value("543843499@qq.com"))
             .andExpect(jsonPath("$.subject").value("Votre clé API Factur-X"))
             .andExpect(jsonPath("$.text").value(containsString("facturx_abc123")))
             .andExpect(jsonPath("$.text").value(containsString(
