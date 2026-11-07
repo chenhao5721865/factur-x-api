@@ -23,6 +23,12 @@ class TarifsControllerTest {
             .andExpect(status().isOk())
             .andExpect(content().string(org.hamcrest.Matchers.containsString("lang=\"fr\"")))
             .andExpect(content().string(org.hamcrest.Matchers.containsString("Étape 1 — Obtenir votre clé API")))
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("Étape 2 — Testez en 30 secondes")))
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("/api/validate")))
+            .andExpect(content().string(org.hamcrest.Matchers.containsString(
+                "/downloads/valid-en16931-cii-basic.xml")))
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("href=\"/docs\"")))
+            .andExpect(content().string(org.hamcrest.Matchers.containsString("Étape 3 — Passer en Pro")))
             .andExpect(content().string(org.hamcrest.Matchers.containsString("9 €")))
             // checkout 走服务端 POST /api/checkout；Souscrire 在拿到 key 前保持 disabled
             .andExpect(content().string(org.hamcrest.Matchers.containsString(

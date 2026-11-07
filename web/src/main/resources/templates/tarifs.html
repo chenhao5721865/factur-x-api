@@ -89,12 +89,30 @@
       </div>
     </section>
 
-    <!-- Étape 2 : souscrire -->
+    <!-- Étape 2 : tester la clé -->
+    <section id="step-test" class="bg-white border border-slate-200 rounded-xl p-6 mb-8">
+      <h2 class="font-semibold text-lg mb-1">Étape 2 — Testez en 30 secondes</h2>
+      <p class="text-sm text-slate-500 mb-3">
+        La validation est illimitée et ne consomme pas votre quota de génération.
+        Collez cette commande dans un terminal, avec votre clé :
+      </p>
+      <pre class="bg-slate-900 text-slate-100 rounded-lg p-4 text-xs overflow-x-auto mb-3"><code>curl -X POST https://factur-x-api.com/api/validate \
+  -H "X-API-Key: <span id="snippet-key">VOTRE_CLE_API</span>" \
+  -F "file=@facture.xml"</code></pre>
+      <p class="text-sm text-slate-600">
+        Pas de fichier sous la main ?
+        <a href="/downloads/valid-en16931-cii-basic.xml" class="text-blue-600 underline">Téléchargez cet exemple</a>
+        et passez-le à la commande. Pour générer une facture à partir de JSON, suivez le
+        <a href="/docs" class="text-blue-600 underline">quickstart de 15 minutes</a>.
+      </p>
+    </section>
+
+    <!-- Étape 3 : souscrire -->
     <section id="step-subscribe" class="bg-white border border-slate-200 rounded-xl p-6 mb-12">
-      <h2 class="font-semibold text-lg mb-1">Étape 2 — Passer en Pro</h2>
+      <h2 class="font-semibold text-lg mb-1">Étape 3 — Passer en Pro</h2>
       <p class="text-sm text-slate-500 mb-4">
-        Obtenez d'abord votre clé ci-dessus, puis souscrivez : votre clé passe en plan Pro
-        automatiquement après le paiement.
+        Une fois la clé testée, souscrivez si vous avez besoin de 500 générations par mois :
+        votre clé passe en plan Pro automatiquement après le paiement.
       </p>
       <button type="button" id="subscribe-btn" disabled
               class="px-6 py-3 bg-blue-600 text-white rounded-lg font-medium hover:bg-blue-700
@@ -140,12 +158,18 @@
       keyMessage.firstChild.textContent = msg;
     }
 
+    function fillSnippet(key) {
+      const el = document.getElementById('snippet-key');
+      if (el) el.textContent = key;
+    }
+
     // Déjà une clé en local : propose directement la souscription
     const stored = localStorage.getItem(API_KEY_STORAGE);
     if (stored) {
       keyValue.textContent = stored;
       keyRevealed.classList.remove('hidden');
-      setOk('Clé déjà obtenue dans ce navigateur. Vous pouvez souscrire directement.');
+      fillSnippet(stored);
+      setOk('Clé déjà obtenue dans ce navigateur. Vous pouvez la tester puis souscrire.');
       enableSubscribe(stored);
     }
 
@@ -199,7 +223,8 @@
           localStorage.setItem(API_KEY_STORAGE, data.apiKey);
           keyValue.textContent = data.apiKey;
           keyRevealed.classList.remove('hidden');
-          setOk('Clé créée ! Conservez-la : elle ne sera plus affichée.');
+          fillSnippet(data.apiKey);
+          setOk('Clé créée ! Testez-la à l’étape 2, puis conservez-la : elle ne sera plus affichée.');
           enableSubscribe(data.apiKey);
         } else if (resp.status === 409) {
           setErr('Une clé active existe déjà pour cet e-mail. '
