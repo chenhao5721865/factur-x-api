@@ -43,3 +43,8 @@ app:
     success-url: ${CREEM_SUCCESS_URL:https://factur-x-api.com/tarifs?merci=1}
     # 空则 webhook 端点 503 fail closed
     webhook-secret: ${CREEM_WEBHOOK_SECRET:}
+  resend:
+    api-base: ${RESEND_API_BASE:https://api.resend.com}
+    # 空则跳过欢迎邮件（key 照常签发）
+    api-key: ${RESEND_API_KEY:}
+    from: ${RESEND_FROM:Factur-X API <bonjour@factur-x-api.com>}

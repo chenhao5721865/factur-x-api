@@ -21,3 +21,8 @@ app:
     api-base: http://localhost:9/v1
     api-key:
     product-id:
+  resend:
+    # 默认未配置：欢迎邮件静默跳过，测试不会出网
+    api-base: http://localhost:9
+    api-key:
+    from: Factur-X API <test@example.com>

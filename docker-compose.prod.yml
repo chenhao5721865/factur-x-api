@@ -45,6 +45,8 @@ services:
       CREEM_SUCCESS_URL: ${CREEM_SUCCESS_URL:-https://factur-x-api.com/tarifs?merci=1}
       CREEM_WEBHOOK_SECRET: ${CREEM_WEBHOOK_SECRET:-}
       CREEM_API_BASE: ${CREEM_API_BASE:-https://api.creem.io/v1}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      RESEND_FROM: ${RESEND_FROM:-Factur-X API <bonjour@factur-x-api.com>}
     depends_on:
       db:
         condition: service_healthy
