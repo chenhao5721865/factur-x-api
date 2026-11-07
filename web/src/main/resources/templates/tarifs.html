@@ -227,8 +227,13 @@
           setOk('Clé créée ! Testez-la à l’étape 2, puis conservez-la : elle ne sera plus affichée.');
           enableSubscribe(data.apiKey);
         } else if (resp.status === 409) {
-          setErr('Une clé active existe déjà pour cet e-mail. '
-            + 'Utilisez la clé que vous avez conservée — si perdue, contactez le support.');
+          if (data.resent) {
+            setOk('Une clé active existe déjà pour cet e-mail. '
+              + 'Nous venons de vous la renvoyer — vérifiez votre boîte de réception.');
+          } else {
+            setErr('Une clé active existe déjà pour cet e-mail. '
+              + 'Vérifiez l’e-mail déjà reçu, ou réessayez dans quelques minutes.');
+          }
         } else if (resp.status === 429) {
           setErr('Trop de demandes. Réessayez dans une heure.');
         } else {

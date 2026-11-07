@@ -2,11 +2,13 @@ package com.facturxapi.api.controller;
 
 import com.facturxapi.api.service.ApiKeyService;
 import com.facturxapi.api.service.IpRateLimiter;
+import com.facturxapi.api.service.KeyResendCooldown;
 import com.facturxapi.api.service.ResendMailClient;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import org.slf4j.Logger;
@@ -20,8 +22,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 /**
- * 公开领 key 端点（定价页自助流程）。幂等语义：已有活跃 key 返回 409 且不回显
- * （公开端点防盗用，丢 key 走 SSH 重发）。
+ * 公开领 key 端点（定价页自助流程）。已有活跃 key 时把该 key 重发到同一邮箱
+ * （收到信即证明邮箱归属），响应仍为 409 且绝不回显 token。
  */
 @RestController
 @RequestMapping("/api")
@@ -34,12 +36,14 @@ public class ApiKeysController {
     private final ApiKeyService apiKeyService;
     private final IpRateLimiter ipRateLimiter;
     private final ResendMailClient mailClient;
+    private final KeyResendCooldown resendCooldown;
 
     public ApiKeysController(ApiKeyService apiKeyService, IpRateLimiter ipRateLimiter,
-                             ResendMailClient mailClient) {
+                             ResendMailClient mailClient, KeyResendCooldown resendCooldown) {
         this.apiKeyService = apiKeyService;
         this.ipRateLimiter = ipRateLimiter;
         this.mailClient = mailClient;
+        this.resendCooldown = resendCooldown;
     }
 
     @PostMapping(value = "/keys", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -54,21 +58,39 @@ public class ApiKeysController {
 
         Optional<String> token = apiKeyService.generateFor(request.email());
         if (token.isEmpty()) {
-            // 已有活跃 key：不回显 token，提示用户找回头_key
-            return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(Map.of("error",
-                    "An active key already exists for this email. "
-                        + "Keep it safe — if lost, contact support to reissue."));
+            return duplicateResponse(request.email());
         }
         String key = token.get();
-        try {
-            // 邮件是激活引导，不是发 key 的前提：失败只记类型，不回滚、不影响 201
-            mailClient.sendWelcome(request.email(), key);
-        } catch (RuntimeException e) {
-            log.warn("keys: welcome email failed for {}: {}",
-                request.email(), e.getClass().getSimpleName());
-        }
+        sendQuietly(request.email(), key);
         return ResponseEntity.status(HttpStatus.CREATED)
             .body(Map.of("email", request.email(), "apiKey", key));
+    }
+
+    /** 丢 key 找回：重发到同一邮箱；受邮箱冷却与发信配置约束，响应不回显 token */
+    private ResponseEntity<?> duplicateResponse(String email) {
+        Optional<String> existing = apiKeyService.findActiveTokenByEmail(email);
+        boolean resent = existing.isPresent()
+            && mailClient.isConfigured()
+            && resendCooldown.tryAcquire(email)
+            && sendQuietly(email, existing.get());
+        Map<String, Object> body = new LinkedHashMap<>();
+        body.put("error", resent
+            ? "An active key already exists for this email. We just re-sent it — check your inbox."
+            : "An active key already exists for this email. Check your inbox, "
+                + "or retry in a few minutes to receive it by email.");
+        body.put("resent", resent);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(body);
+    }
+
+    /** 邮件是激活引导，不是发 key 的前提：失败只记类型，不回滚、不影响主响应 */
+    private boolean sendQuietly(String email, String key) {
+        try {
+            mailClient.sendWelcome(email, key);
+            return true;
+        } catch (RuntimeException e) {
+            log.warn("keys: welcome email failed for {}: {}",
+                email, e.getClass().getSimpleName());
+            return false;
+        }
     }
 }

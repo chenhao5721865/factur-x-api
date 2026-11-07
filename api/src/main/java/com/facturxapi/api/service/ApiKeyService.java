@@ -39,6 +39,12 @@ public class ApiKeyService {
         return Optional.of(token);
     }
 
+    /** 供丢 key 找回：把该邮箱当前的活跃 token 交给发信方，绝不直接回显给请求方 */
+    public Optional<String> findActiveTokenByEmail(String email) {
+        return repository.findByEmailAndRevokedAtIsNull(email)
+            .map(ApiKey::getToken);
+    }
+
     public Optional<String> resolveEmail(String token) {
         return repository.findByToken(token)
             .filter(k -> !k.isRevoked())

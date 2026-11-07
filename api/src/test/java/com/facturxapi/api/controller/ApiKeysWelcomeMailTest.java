@@ -5,7 +5,9 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
 import com.facturxapi.api.repository.ApiKeyRepository;
@@ -76,13 +78,65 @@ class ApiKeysWelcomeMailTest {
     }
 
     @Test
-    void duplicateRequest_doesNotSendMail() throws Exception {
-        requestKey("dup-mail@example.com", "10.11.3.1");
+    void duplicateRequest_resendsExistingKeyWithoutEchoingIt() throws Exception {
+        when(mailClient.isConfigured()).thenReturn(true);
+        String email = "dup-mail@example.com";
+        requestKey(email, "10.11.3.1");
+        String key = apiKeyRepository.findByEmailAndRevokedAtIsNull(email).orElseThrow().getToken();
         clearInvocations(mailClient);
 
-        MvcResult second = requestKey("dup-mail@example.com", "10.11.3.2");
+        MvcResult second = requestKey(email, "10.11.3.2");
 
         assertThat(second.getResponse().getStatus()).isEqualTo(409);
+        String body = second.getResponse().getContentAsString();
+        assertThat(body).contains("\"resent\":true");
+        assertThat(body).doesNotContain(key);
+        verify(mailClient).sendWelcome(email, key);
+    }
+
+    @Test
+    void duplicateRequest_withinCooldown_doesNotResend() throws Exception {
+        when(mailClient.isConfigured()).thenReturn(true);
+        String email = "dup-cooldown@example.com";
+        requestKey(email, "10.11.4.1");
+        clearInvocations(mailClient);
+
+        requestKey(email, "10.11.4.2");
+        MvcResult third = requestKey(email, "10.11.4.3");
+
+        assertThat(third.getResponse().getStatus()).isEqualTo(409);
+        assertThat(third.getResponse().getContentAsString()).contains("\"resent\":false");
+        verify(mailClient, times(1)).sendWelcome(anyString(), anyString());
+    }
+
+    @Test
+    void duplicateRequest_mailFailure_reportsNotResent() throws Exception {
+        when(mailClient.isConfigured()).thenReturn(true);
+        String email = "dup-fail@example.com";
+        requestKey(email, "10.11.5.1");
+        String key = apiKeyRepository.findByEmailAndRevokedAtIsNull(email).orElseThrow().getToken();
+        clearInvocations(mailClient);
+        doThrow(new IllegalStateException("provider down"))
+            .when(mailClient).sendWelcome(anyString(), anyString());
+
+        MvcResult second = requestKey(email, "10.11.5.2");
+
+        assertThat(second.getResponse().getStatus()).isEqualTo(409);
+        String body = second.getResponse().getContentAsString();
+        assertThat(body).contains("\"resent\":false");
+        assertThat(body).doesNotContain(key);
+    }
+
+    @Test
+    void duplicateRequest_unconfiguredMail_reportsNotResent() throws Exception {
+        String email = "dup-nomail@example.com";
+        requestKey(email, "10.11.6.1");
+        clearInvocations(mailClient);
+
+        MvcResult second = requestKey(email, "10.11.6.2");
+
+        assertThat(second.getResponse().getStatus()).isEqualTo(409);
+        assertThat(second.getResponse().getContentAsString()).contains("\"resent\":false");
         verify(mailClient, never()).sendWelcome(anyString(), anyString());
     }
 }

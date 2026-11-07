@@ -32,6 +32,8 @@ app:
     upgrade-url: ${UPGRADE_URL:https://factur-x-api.com/tarifs}
   keys:
     ip-limit-per-hour: ${KEYS_IP_LIMIT_PER_HOUR:5}
+    # 已有 key 重发的最小间隔，防公开端点被用来给他人邮箱灌信
+    resend-cooldown-seconds: ${KEYS_RESEND_COOLDOWN_SECONDS:300}
   lemonsqueezy:
     # 空则 webhook 端点 503 fail closed（订阅永不生效——上线检查项！）
     webhook-secret: ${LS_WEBHOOK_SECRET:}
