@@ -18,6 +18,8 @@ services:
       DB_NAME: facturx
       DB_USER: facturx
       DB_PASSWORD: ${POSTGRES_PASSWORD}
+      RESEND_API_KEY: ${RESEND_API_KEY:-}
+      RESEND_FROM: ${RESEND_FROM:-Factur-X API <bonjour@factur-x-api.com>}
     depends_on:
       db:
         condition: service_healthy

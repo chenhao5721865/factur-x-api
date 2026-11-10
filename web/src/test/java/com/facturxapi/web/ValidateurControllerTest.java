@@ -13,6 +13,7 @@ import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.not;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.multipart;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
@@ -65,6 +66,8 @@ class ValidateurControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(view().name("fragments/resultat :: resultat"))
                 .andExpect(content().string(containsString("Facture conforme")))
+                // 报告表单只在有错误时出现
+                .andExpect(content().string(not(containsString("Recevoir ce rapport par e-mail"))))
                 .andExpect(model().attributeExists("result"));
     }
 
@@ -79,6 +82,10 @@ class ValidateurControllerTest {
                 .andExpect(content().string(containsString("href=\"/regles/br-07\"")))
                 // Thymeleaf 会把撇号转义为 &#39;，断言用未被转义的片段
                 .andExpect(content().string(containsString("le nom de l")))
+                // 不合规时出现「邮件接收报告」表单，隐藏字段带 ruleId 清单
+                .andExpect(content().string(containsString("hx-post=\"/validateur-factur-x/rapport\"")))
+                .andExpect(content().string(containsString("Recevoir ce rapport par e-mail")))
+                .andExpect(content().string(containsString("name=\"ruleIds\" value=\"BR-07")))
                 .andExpect(model().attributeExists("result"));
     }
 

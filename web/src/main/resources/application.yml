@@ -18,3 +18,10 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+
+app:
+  resend:
+    api-base: ${RESEND_API_BASE:https://api.resend.com}
+    # 空则报告邮件端点返回「暂不可用」，不会出网
+    api-key: ${RESEND_API_KEY:}
+    from: ${RESEND_FROM:Factur-X API <bonjour@factur-x-api.com>}

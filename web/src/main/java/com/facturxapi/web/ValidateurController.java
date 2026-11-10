@@ -165,6 +165,10 @@ public class ValidateurController {
         view.put("valid", result.valid());
         view.put("errors", errors);
         view.put("warnings", toIssues(result.warnings()));
+        // 报告表单只提交 ruleId，服务端据此重建法语清单，不接受用户提供的正文
+        view.put("ruleIdsCsv", errors.stream()
+            .map(m -> (String) m.get("ruleId"))
+            .collect(Collectors.joining(",")));
         return view;
     }
 
