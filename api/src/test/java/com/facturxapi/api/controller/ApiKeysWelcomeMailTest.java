@@ -24,7 +24,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
-@SpringBootTest
+@SpringBootTest(properties = "app.keys.global-limit-per-hour=1000")
 @AutoConfigureMockMvc
 class ApiKeysWelcomeMailTest {
 
@@ -80,6 +80,7 @@ class ApiKeysWelcomeMailTest {
     @Test
     void duplicateRequest_resendsExistingKeyWithoutEchoingIt() throws Exception {
         when(mailClient.isConfigured()).thenReturn(true);
+        when(mailClient.sendWelcome(anyString(), anyString())).thenReturn(true);
         String email = "dup-mail@example.com";
         requestKey(email, "10.11.3.1");
         String key = apiKeyRepository.findByEmailAndRevokedAtIsNull(email).orElseThrow().getToken();

@@ -15,7 +15,7 @@ import org.springframework.test.web.servlet.MvcResult;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 
-@SpringBootTest
+@SpringBootTest(properties = "app.keys.global-limit-per-hour=1000")
 @AutoConfigureMockMvc
 class ApiKeysControllerTest {
 

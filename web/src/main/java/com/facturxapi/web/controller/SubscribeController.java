@@ -1,5 +1,6 @@
 package com.facturxapi.web.controller;
 
+import com.facturxapi.web.service.SubscribeRateLimiter;
 import com.facturxapi.web.service.SubscriberService;
 import com.facturxapi.web.service.SubscriberService.SubscribeResult;
 
@@ -16,9 +17,11 @@ public class SubscribeController {
             java.util.regex.Pattern.compile("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
 
     private final SubscriberService subscriberService;
+    private final SubscribeRateLimiter rateLimiter;
 
-    public SubscribeController(SubscriberService subscriberService) {
+    public SubscribeController(SubscriberService subscriberService, SubscribeRateLimiter rateLimiter) {
         this.subscriberService = subscriberService;
+        this.rateLimiter = rateLimiter;
     }
 
     @PostMapping("/subscribe")
@@ -28,6 +31,15 @@ public class SubscribeController {
 
         if (!isHtmx(request)) {
             return ResponseEntity.badRequest().body("Invalid request");
+        }
+
+        String ip = SubscribeRateLimiter.clientIp(
+                request.getHeader("X-Forwarded-For"), request.getRemoteAddr());
+        // 422 而不是 429：htmx 默认只替换 2xx/422，429 用户看不到提示
+        if (!rateLimiter.allow(ip)) {
+            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                    .body("<div class=\"bg-red-50 border border-red-300 text-red-800 rounded-lg p-4 text-sm\">"
+                        + "Trop de tentatives. Réessayez dans une heure.</div>");
         }
 
         // Email format validation (regex, no extra dependency needed)

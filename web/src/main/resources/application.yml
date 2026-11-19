@@ -20,6 +20,9 @@ spring:
     locations: classpath:db/migration
 
 app:
+  subscribe:
+    ip-limit-per-hour: ${SUBSCRIBE_IP_LIMIT_PER_HOUR:5}
+    global-limit-per-hour: ${SUBSCRIBE_GLOBAL_LIMIT_PER_HOUR:20}
   resend:
     api-base: ${RESEND_API_BASE:https://api.resend.com}
     # 空则报告邮件端点返回「暂不可用」，不会出网

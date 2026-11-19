@@ -9,6 +9,7 @@ import static org.springframework.test.web.client.match.MockRestRequestMatchers.
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.method;
 import static org.springframework.test.web.client.match.MockRestRequestMatchers.requestTo;
 import static org.springframework.test.web.client.response.MockRestResponseCreators.withSuccess;
+import static org.springframework.test.web.client.ExpectedCount.times;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.http.HttpMethod;
@@ -55,6 +56,22 @@ class ResendMailClientTest {
 
         assertThatNoException()
             .isThrownBy(() -> client.sendWelcome("buyer@example.com", "facturx_abc123"));
+
+        server.verify();
+    }
+
+    @Test
+    void hourlyCap_stopsFurtherSends() {
+        RestClient.Builder builder = RestClient.builder().baseUrl(BASE);
+        MockRestServiceServer server = MockRestServiceServer.bindTo(builder).build();
+        ResendMailClient client = new ResendMailClient(builder.build(), "re_test_key", FROM, 2);
+
+        server.expect(times(2), requestTo(BASE + "/emails"))
+            .andRespond(withSuccess("{\"id\":\"em_1\"}", MediaType.APPLICATION_JSON));
+
+        assertThat(client.sendWelcome("a@example.com", "facturx_a")).isTrue();
+        assertThat(client.sendWelcome("b@example.com", "facturx_b")).isTrue();
+        assertThat(client.sendWelcome("c@example.com", "facturx_c")).isFalse();
 
         server.verify();
     }

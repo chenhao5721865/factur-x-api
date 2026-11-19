@@ -3,6 +3,8 @@ package com.facturxapi.api.service;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
@@ -14,23 +16,35 @@ import org.springframework.web.client.RestClient;
 @Service
 public class ResendMailClient {
 
+    private static final Logger log = LoggerFactory.getLogger(ResendMailClient.class);
+    private static final long WINDOW_MILLIS = 3600_000L;
+
     private final RestClient restClient;
     private final String apiKey;
     private final String from;
+    private final int hourlyLimit;
+    private long windowStart = System.currentTimeMillis();
+    private int sentInWindow;
 
     @Autowired
     public ResendMailClient(
             RestClient.Builder builder,
             @Value("${app.resend.api-base:https://api.resend.com}") String apiBase,
             @Value("${app.resend.api-key:}") String apiKey,
-            @Value("${app.resend.from:Factur-X API <bonjour@factur-x-api.com>}") String from) {
-        this(buildClient(builder, apiBase), apiKey, from);
+            @Value("${app.resend.from:Factur-X API <bonjour@factur-x-api.com>}") String from,
+            @Value("${app.mail.hourly-limit:5}") int hourlyLimit) {
+        this(buildClient(builder, apiBase), apiKey, from, hourlyLimit);
     }
 
     ResendMailClient(RestClient restClient, String apiKey, String from) {
+        this(restClient, apiKey, from, 5);
+    }
+
+    ResendMailClient(RestClient restClient, String apiKey, String from, int hourlyLimit) {
         this.restClient = restClient;
         this.apiKey = apiKey == null ? "" : apiKey.trim();
         this.from = from == null ? "" : from.trim();
+        this.hourlyLimit = hourlyLimit;
     }
 
     private static RestClient buildClient(RestClient.Builder builder, String apiBase) {
@@ -47,10 +61,14 @@ public class ResendMailClient {
         return !apiKey.isEmpty() && !from.isEmpty();
     }
 
-    /** 发送含 key 与首条 curl 的欢迎邮件；调用方负责兜住异常。 */
-    public void sendWelcome(String email, String apiKeyValue) {
+    /** 发送含 key 与首条 curl 的欢迎邮件；返回是否真的发出，调用方负责兜住异常。 */
+    public boolean sendWelcome(String email, String apiKeyValue) {
         if (!isConfigured()) {
-            return;
+            return false;
+        }
+        if (!acquireSendSlot()) {
+            log.warn("resend: hourly send cap reached, skipping welcome email");
+            return false;
         }
         Map<String, Object> payload = new LinkedHashMap<>();
         payload.put("from", from);
@@ -66,6 +84,18 @@ public class ResendMailClient {
                 .body(payload)
                 .retrieve()
                 .toBodilessEntity();
+        return true;
+    }
+
+    /** 全局小时闸：单实例内存窗口，防止注册脚本把欢迎邮件当放大器。 */
+    private synchronized boolean acquireSendSlot() {
+        long now = System.currentTimeMillis();
+        if (now - windowStart >= WINDOW_MILLIS) {
+            windowStart = now;
+            sentInWindow = 0;
+        }
+        sentInWindow++;
+        return sentInWindow <= hourlyLimit;
     }
 
     static String welcomeText(String apiKeyValue) {

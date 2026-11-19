@@ -1,8 +1,10 @@
 package com.facturxapi.web.controller;
 
+import com.facturxapi.web.service.SubscribeRateLimiter;
 import com.facturxapi.web.service.SubscriberService;
 import com.facturxapi.web.service.SubscriberService.SubscribeResult;
 
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
@@ -23,6 +25,14 @@ class SubscribeControllerTest {
 
     @MockBean
     private SubscriberService subscriberService;
+
+    @MockBean
+    private SubscribeRateLimiter rateLimiter;
+
+    @BeforeEach
+    void allowByDefault() {
+        when(rateLimiter.allow(anyString())).thenReturn(true);
+    }
 
     @Test
     void subscribe_success_returns_200() throws Exception {
@@ -56,6 +66,20 @@ class SubscribeControllerTest {
                         .param("email", "not-an-email"))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(content().string(containsString("invalide")));
+    }
+
+    @Test
+    void rateLimited_returns_422_with_french_message() throws Exception {
+        when(rateLimiter.allow(anyString())).thenReturn(false);
+
+        mockMvc.perform(post("/subscribe")
+                        .header("HX-Request", "true")
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .param("email", "new@example.com"))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(content().string(containsString("Trop de tentatives")));
+
+        verify(subscriberService, never()).subscribe(anyString());
     }
 
     @Test

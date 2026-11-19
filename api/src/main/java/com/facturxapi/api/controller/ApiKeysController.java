@@ -2,6 +2,7 @@ package com.facturxapi.api.controller;
 
 import com.facturxapi.api.service.ApiKeyService;
 import com.facturxapi.api.service.IpRateLimiter;
+import com.facturxapi.api.service.KeyCreationLimiter;
 import com.facturxapi.api.service.KeyResendCooldown;
 import com.facturxapi.api.service.ResendMailClient;
 import jakarta.servlet.http.HttpServletRequest;
@@ -35,13 +36,16 @@ public class ApiKeysController {
 
     private final ApiKeyService apiKeyService;
     private final IpRateLimiter ipRateLimiter;
+    private final KeyCreationLimiter keyCreationLimiter;
     private final ResendMailClient mailClient;
     private final KeyResendCooldown resendCooldown;
 
     public ApiKeysController(ApiKeyService apiKeyService, IpRateLimiter ipRateLimiter,
-                             ResendMailClient mailClient, KeyResendCooldown resendCooldown) {
+                             KeyCreationLimiter keyCreationLimiter, ResendMailClient mailClient,
+                             KeyResendCooldown resendCooldown) {
         this.apiKeyService = apiKeyService;
         this.ipRateLimiter = ipRateLimiter;
+        this.keyCreationLimiter = keyCreationLimiter;
         this.mailClient = mailClient;
         this.resendCooldown = resendCooldown;
     }
@@ -51,7 +55,7 @@ public class ApiKeysController {
                                     HttpServletRequest httpRequest) {
         String ip = IpRateLimiter.clientIp(
             httpRequest.getHeader("X-Forwarded-For"), httpRequest.getRemoteAddr());
-        if (!ipRateLimiter.allow(ip)) {
+        if (!ipRateLimiter.allow(ip) || !keyCreationLimiter.allow()) {
             return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
                 .body(Map.of("error", "Too many requests. Try again later."));
         }
@@ -85,8 +89,7 @@ public class ApiKeysController {
     /** 邮件是激活引导，不是发 key 的前提：失败只记类型，不回滚、不影响主响应 */
     private boolean sendQuietly(String email, String key) {
         try {
-            mailClient.sendWelcome(email, key);
-            return true;
+            return mailClient.sendWelcome(email, key);
         } catch (RuntimeException e) {
             log.warn("keys: welcome email failed for {}: {}",
                 email, e.getClass().getSimpleName());
