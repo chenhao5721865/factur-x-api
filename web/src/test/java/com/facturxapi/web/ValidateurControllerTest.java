@@ -86,7 +86,20 @@ class ValidateurControllerTest {
                 .andExpect(content().string(containsString("hx-post=\"/validateur-factur-x/rapport\"")))
                 .andExpect(content().string(containsString("Recevoir ce rapport par e-mail")))
                 .andExpect(content().string(containsString("name=\"ruleIds\" value=\"BR-07")))
+                // 买方姓名缺失：没有可回显的字段值
+                .andExpect(content().string(not(containsString("Valeur trouvée"))))
                 .andExpect(model().attributeExists("result"));
+    }
+
+    @Test
+    void negativeAmount_200_showsFailingValue() throws Exception {
+        mvc.perform(htmxUpload("negative.xml", readSample("invalid-negative-amount.xml")))
+                .andExpect(status().isOk())
+                .andExpect(view().name("fragments/resultat :: resultat"))
+                .andExpect(content().string(containsString("Facture non conforme")))
+                .andExpect(content().string(containsString("BR-CO-16")))
+                .andExpect(content().string(containsString("Valeur trouvée")))
+                .andExpect(content().string(containsString("-250.33")));
     }
 
     @Test

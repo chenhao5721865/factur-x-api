@@ -179,6 +179,7 @@ public class ValidateurController {
             m.put("xpath", i.xpath());
             m.put("fr", RuleMessages.get(i.ruleId()));
             m.put("raw", i.message());
+            m.put("value", i.value());
             return m;
         }).toList();
     }

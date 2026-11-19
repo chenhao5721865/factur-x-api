@@ -328,14 +328,27 @@ curl -X POST https://factur-x-api.com/api/validate \
   "profile": null,
   "errors": [
     {
+      "ruleId": "BR-CO-16",
+      "severity": "ERROR",
+      "xpath": "/rsm:CrossIndustryInvoice/.../ram:SpecifiedTradeSettlementHeaderMonetarySummation",
+      "message": "Le montant dû doit être égal au total TTC moins les acomptes versés.",
+      "value": "-250.33"
+    },
+    {
       "ruleId": "BR-07",
       "severity": "ERROR",
-      "xpath": "...",
-      "message": "Le nom de l'acheteur doit être renseigné."
+      "xpath": "/rsm:CrossIndustryInvoice",
+      "message": "Le nom de l'acheteur doit être renseigné.",
+      "value": null
     }
   ],
   "warnings": []
 }</pre>
+      <p class="text-sm text-slate-500 mb-4">
+        <code>value</code> : valeur du champ en erreur, extraite du XML embarqué (et non du texte de la page PDF).
+        Elle vaut <code>null</code> lorsque l'erreur porte sur un groupe de champs, qu'un champ obligatoire est
+        absent, ou qu'il s'agit d'une erreur de syntaxe XSD.
+      </p>
       <div class="overflow-x-auto">
         <table class="w-full text-sm border border-slate-200 bg-white rounded-lg">
           <thead class="bg-slate-100 text-left">

@@ -88,6 +88,25 @@ class ValidateControllerTest {
     }
 
     @Test
+    void negativeAmount_withValidKey_echoesFailingFieldValue() throws Exception {
+        byte[] data = Files.readAllBytes(SAMPLES.resolve("invalid-negative-amount.xml"));
+        mockMvc.perform(prepare("negative.xml", data))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.valid").value(false))
+            .andExpect(jsonPath("$.errors[?(@.ruleId == 'BR-CO-16')].value")
+                .value(org.hamcrest.Matchers.hasItem("-250.33")));
+    }
+
+    @Test
+    void missingBuyer_withValidKey_valueIsNull() throws Exception {
+        byte[] data = Files.readAllBytes(SAMPLES.resolve("invalid-missing-buyer.xml"));
+        mockMvc.perform(prepare("invalid.xml", data))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.errors[?(@.ruleId == 'BR-07')].value",
+                org.hamcrest.Matchers.everyItem(org.hamcrest.Matchers.nullValue())));
+    }
+
+    @Test
     void validPdf_withValidKey_returns200() throws Exception {
         byte[] data = Files.readAllBytes(SAMPLES.resolve("factur-x-basic.pdf"));
         mockMvc.perform(prepare("facture.pdf", data))

@@ -48,6 +48,9 @@
                 <span th:text="${i.raw}"></span>
                 <span class="text-xs text-slate-400">(message technique non traduit)</span>
               </p>
+              <p th:if="${i.value != null}" class="mt-1 text-xs text-slate-500">
+                Valeur trouvée : <code class="px-1 py-0.5 rounded bg-slate-100 text-slate-800 break-all" th:text="${i.value}"></code>
+              </p>
               <details class="mt-1">
                 <summary class="text-xs text-slate-400 cursor-pointer hover:text-slate-600">Détails techniques</summary>
                 <pre class="mt-1 text-xs text-slate-500 whitespace-pre-wrap" th:text="${i.xpath}"></pre>
@@ -103,6 +106,9 @@
             <div class="text-sm">
               <p th:if="${i.fr != null}" th:text="${i.fr}"></p>
               <p th:if="${i.fr == null}" th:text="${i.raw}"></p>
+              <p th:if="${i.value != null}" class="mt-1 text-xs text-slate-500">
+                Valeur trouvée : <code class="px-1 py-0.5 rounded bg-slate-100 text-slate-800 break-all" th:text="${i.value}"></code>
+              </p>
               <details class="mt-1">
                 <summary class="text-xs text-slate-400 cursor-pointer hover:text-slate-600">Détails techniques</summary>
                 <pre class="mt-1 text-xs text-slate-500 whitespace-pre-wrap" th:text="${i.xpath}"></pre>

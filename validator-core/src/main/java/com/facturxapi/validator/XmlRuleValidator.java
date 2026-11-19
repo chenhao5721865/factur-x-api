@@ -108,7 +108,8 @@ public final class XmlRuleValidator {
             // applySchematronValidationToSVRL 入参须是 DOM 节点（spike 实测，7.1.3）
             SchematronOutputType svrl = schematron.applySchematronValidationToSVRL(doc, null);
             for (SVRLFailedAssert fa : SVRLHelper.getAllFailedAssertions(svrl)) {
-                issues.add(new Issue(fa.getID(), Severity.ERROR, fa.getLocation(), fa.getText().trim()));
+                issues.add(new Issue(fa.getID(), Severity.ERROR, fa.getLocation(), fa.getText().trim(),
+                        XmlValueExtractor.extract(doc, fa.getLocation(), fa.getID())));
             }
         } catch (Exception e) {
             throw new IllegalStateException("Schematron 校验执行失败", e);

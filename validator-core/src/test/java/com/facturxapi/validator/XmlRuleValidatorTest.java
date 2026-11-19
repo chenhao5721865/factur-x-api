@@ -32,6 +32,9 @@ class XmlRuleValidatorTest {
         assertThat(r.errors()).isNotEmpty();
         assertThat(r.errors()).anyMatch(i -> i.ruleId().equals("BR-07"));
         assertThat(r.errors()).noneMatch(i -> i.ruleId().equals("XSD")); // 买方节点 minOccurs=0，XSD 应放行
+        // 定位是根节点且字段缺失：没有可回显的值
+        assertThat(r.errors()).filteredOn(i -> i.ruleId().equals("BR-07"))
+            .allMatch(i -> i.value() == null);
     }
 
     @Test
@@ -39,6 +42,9 @@ class XmlRuleValidatorTest {
         byte[] xml = Files.readAllBytes(Path.of("../samples/invalid-negative-amount.xml"));
         ValidationResult r = validator().validate(xml);
         assertThat(r.errors()).anyMatch(i -> i.ruleId().equals("BR-CO-16"));
+        // 定位在汇总节点上，经规则映射回显 DuePayableAmount 的实际值
+        assertThat(r.errors()).filteredOn(i -> i.ruleId().equals("BR-CO-16"))
+            .allMatch(i -> "-250.33".equals(i.value()));
     }
 
     @Test
