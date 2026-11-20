@@ -28,3 +28,9 @@ app:
     # 空则报告邮件端点返回「暂不可用」，不会出网
     api-key: ${RESEND_API_KEY:}
     from: ${RESEND_FROM:Factur-X API <bonjour@factur-x-api.com>}
+  turnstile:
+    api-base: ${TURNSTILE_API_BASE:https://challenges.cloudflare.com}
+    # 公开 site key：空则不渲染组件
+    site-key: ${TURNSTILE_SITE_KEY:}
+    # 空则跳过校验（本地/测试）；生产必须配置
+    secret: ${TURNSTILE_SECRET:}

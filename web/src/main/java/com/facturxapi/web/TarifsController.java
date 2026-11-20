@@ -1,5 +1,6 @@
 package com.facturxapi.web;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -12,10 +13,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 @Controller
 public class TarifsController {
 
+    @Value("${app.turnstile.site-key:}")
+    private String turnstileSiteKey;
+
     @GetMapping("/tarifs")
     public String page(@RequestParam(value = "merci", required = false) Integer merci,
                        Model model) {
         model.addAttribute("merci", merci != null && merci == 1);
+        model.addAttribute("turnstileSiteKey", turnstileSiteKey);
         return "tarifs";
     }
 }

@@ -38,7 +38,10 @@ class TarifsControllerTest {
             .andExpect(content().string(org.hamcrest.Matchers.not(
                 org.hamcrest.Matchers.containsString("LemonSqueezy"))))
             .andExpect(content().string(org.hamcrest.Matchers.not(
-                org.hamcrest.Matchers.containsString("CHECKOUT_URL"))));
+                org.hamcrest.Matchers.containsString("CHECKOUT_URL"))))
+            // site key 未配置时不得加载 Turnstile 外部脚本
+            .andExpect(content().string(org.hamcrest.Matchers.not(
+                org.hamcrest.Matchers.containsString("challenges.cloudflare.com"))));
     }
 
     @Test

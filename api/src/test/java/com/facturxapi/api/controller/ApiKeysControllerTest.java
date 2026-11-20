@@ -1,14 +1,18 @@
 package com.facturxapi.api.controller;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
 
 import com.facturxapi.api.repository.ApiKeyRepository;
 import com.facturxapi.api.repository.ApiUsageRepository;
+import com.facturxapi.api.service.TurnstileVerifier;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -28,10 +32,14 @@ class ApiKeysControllerTest {
     @Autowired
     private ApiUsageRepository apiUsageRepository;
 
+    @MockBean
+    private TurnstileVerifier turnstileVerifier;
+
     @BeforeEach
     void setUp() {
         apiUsageRepository.deleteAll();
         apiKeyRepository.deleteAll();
+        when(turnstileVerifier.verify(any(), any())).thenReturn(true);
     }
 
     /** 发领 key 请求，X-Forwarded-For 用例间隔离 IP 限流窗口 */
@@ -71,6 +79,17 @@ class ApiKeysControllerTest {
     @Test
     void invalidEmail_returns400() throws Exception {
         assertThat(statusOf(requestKey("not-an-email", "10.3.3.1"))).isEqualTo(400);
+    }
+
+    @Test
+    void captchaRejected_returns400_andCreatesNoKey() throws Exception {
+        when(turnstileVerifier.verify(any(), any())).thenReturn(false);
+
+        MvcResult result = requestKey("bot@example.com", "10.6.6.1");
+
+        assertThat(statusOf(result)).isEqualTo(400);
+        assertThat(result.getResponse().getContentAsString()).contains("Captcha");
+        assertThat(apiKeyRepository.findAll()).isEmpty();
     }
 
     @Test

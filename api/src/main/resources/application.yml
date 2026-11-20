@@ -55,3 +55,7 @@ app:
     # 空则跳过欢迎邮件（key 照常签发）
     api-key: ${RESEND_API_KEY:}
     from: ${RESEND_FROM:Factur-X API <bonjour@factur-x-api.com>}
+  turnstile:
+    api-base: ${TURNSTILE_API_BASE:https://challenges.cloudflare.com}
+    # 空则跳过校验（本地/测试）；生产必须配置，否则建 key 不设防
+    secret: ${TURNSTILE_SECRET:}

@@ -94,8 +94,9 @@
       <p>
         Vos données sont accessibles à l'éditeur du service et aux sous-traitants suivants :
         l'hébergeur (Hetzner, Allemagne), le prestataire d'envoi d'e-mails transactionnels
-        (Resend, données hébergées dans l'Union européenne) et le prestataire de paiement
-        (merchant of record). Elles peuvent également être communiquées aux autorités lorsque la
+        (Resend, données hébergées dans l'Union européenne), le prestataire de paiement
+        (merchant of record) et le service de vérification anti-robot des formulaires
+        (Cloudflare Turnstile). Elles peuvent également être communiquées aux autorités lorsque la
         loi l'exige.
       </p>
       <p>
@@ -113,6 +114,10 @@
       <p>
         Certaines pages chargent des bibliothèques depuis des réseaux de diffusion publics
         (Tailwind CSS, htmx). Ces requêtes peuvent transmettre votre adresse IP à ces prestataires.
+      </p>
+      <p>
+        Les formulaires d'obtention de clé et d'inscription sont protégés par Cloudflare Turnstile,
+        qui peut déposer un cookie technique le temps de la vérification anti-robot.
       </p>
 
       <h2 class="text-xl font-semibold text-slate-800 pt-4">Sécurité</h2>

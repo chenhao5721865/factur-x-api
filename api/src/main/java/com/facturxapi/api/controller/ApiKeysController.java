@@ -5,6 +5,7 @@ import com.facturxapi.api.service.IpRateLimiter;
 import com.facturxapi.api.service.KeyCreationLimiter;
 import com.facturxapi.api.service.KeyResendCooldown;
 import com.facturxapi.api.service.ResendMailClient;
+import com.facturxapi.api.service.TurnstileVerifier;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Email;
@@ -32,22 +33,24 @@ public class ApiKeysController {
 
     private static final Logger log = LoggerFactory.getLogger(ApiKeysController.class);
 
-    public record KeyRequest(@NotBlank @Email String email) {}
+    public record KeyRequest(@NotBlank @Email String email, String turnstileToken) {}
 
     private final ApiKeyService apiKeyService;
     private final IpRateLimiter ipRateLimiter;
     private final KeyCreationLimiter keyCreationLimiter;
     private final ResendMailClient mailClient;
     private final KeyResendCooldown resendCooldown;
+    private final TurnstileVerifier turnstileVerifier;
 
     public ApiKeysController(ApiKeyService apiKeyService, IpRateLimiter ipRateLimiter,
                              KeyCreationLimiter keyCreationLimiter, ResendMailClient mailClient,
-                             KeyResendCooldown resendCooldown) {
+                             KeyResendCooldown resendCooldown, TurnstileVerifier turnstileVerifier) {
         this.apiKeyService = apiKeyService;
         this.ipRateLimiter = ipRateLimiter;
         this.keyCreationLimiter = keyCreationLimiter;
         this.mailClient = mailClient;
         this.resendCooldown = resendCooldown;
+        this.turnstileVerifier = turnstileVerifier;
     }
 
     @PostMapping(value = "/keys", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -58,6 +61,10 @@ public class ApiKeysController {
         if (!ipRateLimiter.allow(ip) || !keyCreationLimiter.allow()) {
             return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
                 .body(Map.of("error", "Too many requests. Try again later."));
+        }
+        if (!turnstileVerifier.verify(request.turnstileToken(), ip)) {
+            return ResponseEntity.badRequest()
+                .body(Map.of("error", "Captcha verification failed. Refresh the page and try again."));
         }
 
         Optional<String> token = apiKeyService.generateFor(request.email());

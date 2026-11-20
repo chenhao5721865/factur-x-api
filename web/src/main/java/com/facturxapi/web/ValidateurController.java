@@ -14,6 +14,7 @@ import com.facturxapi.validator.ValidationResult;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -40,6 +41,9 @@ public class ValidateurController {
 
     private final FacturxValidator validator;
 
+    @Value("${app.turnstile.site-key:}")
+    private String turnstileSiteKey;
+
     public ValidateurController(FacturxValidator validator) {
         this.validator = validator;
     }
@@ -47,6 +51,7 @@ public class ValidateurController {
     @GetMapping("/validateur-factur-x")
     public String page(Model model) {
         model.addAttribute("result", null);
+        model.addAttribute("turnstileSiteKey", turnstileSiteKey);
         addRulePageSlugs(model);
         return "validateur";
     }

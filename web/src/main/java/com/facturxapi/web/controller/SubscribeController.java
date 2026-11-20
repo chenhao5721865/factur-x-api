@@ -3,6 +3,7 @@ package com.facturxapi.web.controller;
 import com.facturxapi.web.service.SubscribeRateLimiter;
 import com.facturxapi.web.service.SubscriberService;
 import com.facturxapi.web.service.SubscriberService.SubscribeResult;
+import com.facturxapi.web.service.TurnstileVerifier;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,15 +19,19 @@ public class SubscribeController {
 
     private final SubscriberService subscriberService;
     private final SubscribeRateLimiter rateLimiter;
+    private final TurnstileVerifier turnstileVerifier;
 
-    public SubscribeController(SubscriberService subscriberService, SubscribeRateLimiter rateLimiter) {
+    public SubscribeController(SubscriberService subscriberService, SubscribeRateLimiter rateLimiter,
+                               TurnstileVerifier turnstileVerifier) {
         this.subscriberService = subscriberService;
         this.rateLimiter = rateLimiter;
+        this.turnstileVerifier = turnstileVerifier;
     }
 
     @PostMapping("/subscribe")
     public ResponseEntity<String> subscribe(
             @RequestParam("email") String email,
+            @RequestParam(value = "cf-turnstile-response", required = false) String turnstileToken,
             jakarta.servlet.http.HttpServletRequest request) {
 
         if (!isHtmx(request)) {
@@ -40,6 +45,12 @@ public class SubscribeController {
             return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
                     .body("<div class=\"bg-red-50 border border-red-300 text-red-800 rounded-lg p-4 text-sm\">"
                         + "Trop de tentatives. Réessayez dans une heure.</div>");
+        }
+
+        if (!turnstileVerifier.verify(turnstileToken, ip)) {
+            return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                    .body("<div class=\"bg-red-50 border border-red-300 text-red-800 rounded-lg p-4 text-sm\">"
+                        + "Vérification anti-robot échouée. Rechargez la page et réessayez.</div>");
         }
 
         // Email format validation (regex, no extra dependency needed)

@@ -3,6 +3,7 @@ package com.facturxapi.web.controller;
 import com.facturxapi.web.service.SubscribeRateLimiter;
 import com.facturxapi.web.service.SubscriberService;
 import com.facturxapi.web.service.SubscriberService.SubscribeResult;
+import com.facturxapi.web.service.TurnstileVerifier;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,9 +30,13 @@ class SubscribeControllerTest {
     @MockBean
     private SubscribeRateLimiter rateLimiter;
 
+    @MockBean
+    private TurnstileVerifier turnstileVerifier;
+
     @BeforeEach
     void allowByDefault() {
         when(rateLimiter.allow(anyString())).thenReturn(true);
+        when(turnstileVerifier.verify(any(), any())).thenReturn(true);
     }
 
     @Test
@@ -66,6 +71,20 @@ class SubscribeControllerTest {
                         .param("email", "not-an-email"))
                 .andExpect(status().isUnprocessableEntity())
                 .andExpect(content().string(containsString("invalide")));
+    }
+
+    @Test
+    void captchaRejected_returns_422_andSkipsSubscription() throws Exception {
+        when(turnstileVerifier.verify(any(), any())).thenReturn(false);
+
+        mockMvc.perform(post("/subscribe")
+                        .header("HX-Request", "true")
+                        .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                        .param("email", "new@example.com"))
+                .andExpect(status().isUnprocessableEntity())
+                .andExpect(content().string(containsString("anti-robot")));
+
+        verify(subscriberService, never()).subscribe(anyString());
     }
 
     @Test
